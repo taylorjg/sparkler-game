@@ -7,7 +7,8 @@ Attempt to re-create the JavaScript demo shown during the Royal Institution Chri
 * ~~Animate single particle~~
 * ~~Animate multiple particles~~
 * ~~Parameterise the origin of the firework~~
-* Add gravity effect
+* Use multiple colours in the firework
+* ~~Add gravity effect~~
 * Add brightness effect
 * Add fading effect
 * Add burst effect (via a key e.g. the 'b' key)
@@ -15,8 +16,9 @@ Attempt to re-create the JavaScript demo shown during the Royal Institution Chri
 * Add movement: horizontal scrolling
 * Add obstacles
 * Add collision detectionthe: the firework colliding with obstacles
-* Handle game over on collision: show score (count of successfully navigated obstacles)
-* Add burst effect after successfully navigating an obstacle
+* Display score (count of successfully navigated obstacles)
+* Handle game over on collision: show final score
+* trigger burst effect after successfully navigating each obstacle
 * Add ability to control the upward boost via the microphone volume level
 
 # Links
