@@ -1,0 +1,18 @@
+{
+  "name": "fireworks",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "eslint": "eslint .",
+    "start": "node server"
+  },
+  "author": "Jonathan Taylor",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
