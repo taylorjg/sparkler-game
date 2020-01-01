@@ -9,26 +9,42 @@ const ctx = canvas.getContext('2d')
 
 const randomSpeedX = () => (Math.random() - 0.5) * 5
 const randomSpeedY = () => 5 + Math.random() * 5
+const randomHeight = () => MAX_HEIGHT_BASE - Math.random() * 10 * PARTICLE_SIZE
 
-const size = 10
-let speedX = randomSpeedX()
-let speedY = randomSpeedY()
-let x = height - size
-let y = (width - size) / 2
+const PARTICLE_SIZE = 10
+const MAX_HEIGHT_BASE = height - 20 * PARTICLE_SIZE
+const NUM_PARTICLES = 20
+const particles = []
+
+const range = n => Array.from(Array(n).keys())
+
+const initParticle = index => {
+  particles[index] = {
+    x: height - PARTICLE_SIZE,
+    y: (width - PARTICLE_SIZE) / 2,
+    speedX: randomSpeedX(),
+    speedY: randomSpeedY()
+  }
+}
+
+const initParticles = () => {
+  range(NUM_PARTICLES).forEach(initParticle)
+}
 
 const animate = () => {
   ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = 'magenta'
-  ctx.fillRect(x, y, size, size)
-  x += speedX
-  y -= speedY
-  if (y < 0) {
-    speedX = randomSpeedX()
-    speedY = randomSpeedY()
-    x = height - size
-    y = (width - size) / 2
-  }
+  particles.forEach((particle, index) => {
+    const { x, y, speedX, speedY } = particle
+    ctx.fillRect(x, y, PARTICLE_SIZE, PARTICLE_SIZE)
+    particle.x += speedX
+    particle.y -= speedY
+    if (particle.y < randomHeight()) {
+      initParticle(index)
+    }
+  })
   requestAnimationFrame(animate)
 }
 
+initParticles()
 animate()
