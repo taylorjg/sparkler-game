@@ -2,7 +2,6 @@ const COLOURS = [
   '#ffffff',
   '#ffffff',
   '#ff00ff',
-  '#ff00ff',
   '#ffff00',
   '#ffff00',
   '#90ee90',
@@ -97,10 +96,10 @@ const render = () => {
     const numColours = COLOURS.length
     const colourIndex = numColours - Math.floor(iterations / SPARKLER_PARTICLE_ITERATIONS * numColours)
     const rgbStr = COLOURS[colourIndex]
-    const alpha = Math.floor(iterations / SPARKLER_PARTICLE_ITERATIONS * 255)
+    const alpha = 127 + Math.floor(iterations / SPARKLER_PARTICLE_ITERATIONS * 128)
     const alphaStr = alpha.toString(16).padStart(2, '0')
     globals.CTX.fillStyle = rgbStr + alphaStr
-    globals.CTX.fillRect(x, y, size, size)
+    globals.CTX.fillRect(x - size / 2, y - size / 2, size, size)
     sparklerParticle.x += velocityX
     sparklerParticle.y += velocityY + movementY
     sparklerParticle.iterations -= 1
@@ -115,7 +114,7 @@ const render = () => {
   globals.burstParticles.forEach(burstParticle => {
     const { x, y, size, angle } = burstParticle
     globals.CTX.fillStyle = '#ffffff'
-    globals.CTX.fillRect(x, y, size, size)
+    globals.CTX.fillRect(x - size / 2, y - size / 2, size, size)
     burstParticle.x += BURST_PARTICLE_VELOCITY * 2 * Math.cos(angle)
     burstParticle.y += BURST_PARTICLE_VELOCITY * 2 * Math.sin(angle)
     burstParticle.iterations -= 1
@@ -135,8 +134,8 @@ const applyBoost = () => {
 
 const applyBurst = () => {
   if (globals.burstParticles.length === 0) {
-    const angles = range(8).map(n => n * 45 * Math.PI / 180)
-    const hypotenuses = range(3).map(n => (n + 1) * BURST_PARTICLE_VELOCITY)
+    const angles = range(8).map(n => n * 45).map(a => a * Math.PI / 180)
+    const hypotenuses = range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
     angles.forEach(angle =>
       hypotenuses.forEach(hypotenuse => {
         const burstParticle = {
@@ -167,7 +166,7 @@ const drawMicrophoneSignal = (canvasId, data) => {
       datasets: [{
         data,
         borderColor: 'green',
-        borderWidth: 0.5,
+        borderWidth: 1,
         pointStyle: 'line',
         radius: 1,
         fill: false,
@@ -195,8 +194,8 @@ const drawMicrophoneSignal = (canvasId, data) => {
           type: 'linear',
           ticks: {
             fontSize: 8,
-            min: -1,
-            max: +1
+            min: -0.5,
+            max: +0.5
           }
         }]
       }
