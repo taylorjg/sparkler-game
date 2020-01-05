@@ -3,10 +3,17 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
 #canvas {
   width: 100%;
   height: 100%;
   background-color: black;
+}
+
+#microphone-controls {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
 }

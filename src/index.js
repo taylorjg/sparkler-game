@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 const COLOURS = [
   '#ffffff',
   '#ffffff',
@@ -32,7 +30,11 @@ const globals = {
   currentY: 0,
   remainingBoosts: 0,
   particles: [],
-  lastRenderTimestamp: 0
+  lastRenderTimestamp: 0,
+
+  audioContext: undefined,
+  mediaStream: undefined,
+  microphoneOn: false
 }
 
 const getTimestamp = () => new Date().getTime()
@@ -103,17 +105,76 @@ const render = () => {
     globals.currentY = globals.INITIAL_Y
   }
   requestAnimationFrame(render)
+  updateButtonState()
+}
+
+const applyBoost = () => {
+  if (globals.remainingBoosts === 0) {
+    globals.remainingBoosts = MAX_BOOSTS
+  }
 }
 
 const onKeyDown = e => {
   if (e.keyCode === UP_ARROW_KEY) {
-    if (globals.remainingBoosts === 0) {
-      globals.remainingBoosts = MAX_BOOSTS
+    applyBoost()
+  }
+}
+
+class StreamWorklet extends AudioWorkletNode {
+
+  constructor(context, name) {
+    console.log(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${context.sampleRate}`)
+    super(context, name)
+    this.port.onmessage = this.onMessage
+  }
+
+  onMessage(message) {
+    if (!globals.microphoneOn) return
+    const input = message.data[0]
+    const channelData0 = input[0]
+    const channelData1 = input[1]
+    const combinedData = channelData0.map((v0, index) => {
+      const v1 = channelData1[index]
+      return 0.5 * (v0 + v1)
+    })
+    const minValue = Math.min(...combinedData)
+    const maxValue = Math.max(...combinedData)
+    console.log(`combinedData: minValue ${minValue} / maxValue ${maxValue}`)
+    if (maxValue >= 0.25) {
+      applyBoost()
     }
   }
 }
 
-const init = () => {
+const onMicrophoneOn = async () => {
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  const audioContext = new AudioContext({ sampleRate: 8000 })
+  const source = audioContext.createMediaStreamSource(mediaStream)
+  await audioContext.audioWorklet.addModule('stream-processor.js')
+  const streamProcessor = new StreamWorklet(audioContext, 'stream-processor')
+  source.connect(streamProcessor)
+  streamProcessor.connect(audioContext.destination)
+  globals.audioContext = audioContext
+  globals.mediaStream = mediaStream
+  globals.microphoneOn = true
+}
+
+const onMicrophoneOff = () => {
+  globals.mediaStream.getTracks().forEach(track => track.stop())
+  globals.audioContext.close()
+  globals.audioContext = undefined
+  globals.mediaStream = undefined
+  globals.microphoneOn = false
+}
+
+const updateButtonState = () => {
+  const microphoneOnButton = document.getElementById('microphone-on-btn')
+  const microphoneOffButton = document.getElementById('microphone-off-btn')
+  microphoneOnButton.disabled = globals.microphoneOn
+  microphoneOffButton.disabled = !globals.microphoneOn
+}
+
+const init = async () => {
   const canvas = document.getElementById('canvas')
   const width = canvas.scrollWidth
   const height = canvas.scrollHeight
@@ -132,6 +193,12 @@ const init = () => {
   globals.lastRenderTimestamp = getTimestamp()
 
   document.addEventListener('keydown', onKeyDown)
+
+  const microphoneOnButton = document.getElementById('microphone-on-btn')
+  microphoneOnButton.addEventListener('click', onMicrophoneOn)
+
+  const microphoneOffButton = document.getElementById('microphone-off-btn')
+  microphoneOffButton.addEventListener('click', onMicrophoneOff)
 
   render()
 }
