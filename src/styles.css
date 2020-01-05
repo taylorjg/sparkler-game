@@ -12,8 +12,13 @@ html, body {
   background-color: black;
 }
 
-#microphone-controls {
+#microphone-panel {
   position: absolute;
   right: 20px;
   bottom: 20px;
+}
+
+#microphone-buttons {
+  display: flex;
+  justify-content: flex-end;
 }

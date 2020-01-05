@@ -17,7 +17,6 @@ const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
 
 const globals = {
-  CANVAS: undefined,
   CTX: undefined,
   WIDTH: 0,
   HEIGHT: 0,
@@ -34,8 +33,11 @@ const globals = {
 
   audioContext: undefined,
   mediaStream: undefined,
+  // analyzer: undefined,
   microphoneOn: false
 }
+
+const range = n => Array.from(Array(n).keys())
 
 const getTimestamp = () => new Date().getTime()
 
@@ -120,29 +122,76 @@ const onKeyDown = e => {
   }
 }
 
+const drawMicrophoneSignal = (canvasId, data) => {
+  new Chart(canvasId, {
+    type: 'line',
+    data: {
+      labels: range(data.length),
+      datasets: [{
+        data,
+        borderColor: 'green',
+        borderWidth: 0.5,
+        pointStyle: 'line',
+        radius: 1,
+        fill: false,
+      }]
+    },
+    options: {
+      events: [],
+      legend: {
+        display: false
+      },
+      animation: {
+        duration: 0
+      },
+      scales: {
+        xAxes: [{
+          type: 'category',
+          labels: range(data.length),
+          ticks: {
+            fontSize: 8,
+            autoSkip: false,
+            callback: x => x % 16 === 0 || x === data.length - 1 ? x : null
+          }
+        }],
+        yAxes: [{
+          type: 'linear',
+          ticks: {
+            fontSize: 8,
+            min: -1,
+            max: +1
+          }
+        }]
+      }
+    }
+  })
+}
+
+// const visualiseMicrophoneSignal = () => {
+//   if (globals.microphoneOn) {
+//     const timeDomainData = new Uint8Array(globals.analyzer.frequencyBinCount)
+//     globals.analyzer.getByteTimeDomainData(timeDomainData)
+//     drawMicrophoneSignal('microphone-signal', timeDomainData)
+//     requestAnimationFrame(visualiseMicrophoneSignal)
+//   }
+// }
+
 class StreamWorklet extends AudioWorkletNode {
 
-  constructor(context, name) {
-    console.log(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${context.sampleRate}`)
-    super(context, name)
+  constructor(audioContext, name) {
+    console.log(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
+    super(audioContext, name)
     this.port.onmessage = this.onMessage
   }
 
   onMessage(message) {
     if (!globals.microphoneOn) return
     const input = message.data[0]
-    const channelData0 = input[0]
-    const channelData1 = input[1]
-    const combinedData = channelData0.map((v0, index) => {
-      const v1 = channelData1[index]
-      return 0.5 * (v0 + v1)
-    })
-    const minValue = Math.min(...combinedData)
-    const maxValue = Math.max(...combinedData)
-    console.log(`combinedData: minValue ${minValue} / maxValue ${maxValue}`)
-    if (maxValue >= 0.25) {
+    const channel = input[0]
+    if (channel.some(value => value >= 0.25)) {
       applyBoost()
     }
+    drawMicrophoneSignal('microphone-signal', channel)
   }
 }
 
@@ -154,9 +203,14 @@ const onMicrophoneOn = async () => {
   const streamProcessor = new StreamWorklet(audioContext, 'stream-processor')
   source.connect(streamProcessor)
   streamProcessor.connect(audioContext.destination)
+  // const analyzer = audioContext.createAnalyser()
+  // analyzer.fftSize = 256
+  // source.connect(analyzer)
   globals.audioContext = audioContext
   globals.mediaStream = mediaStream
+  // globals.analyzer = analyzer
   globals.microphoneOn = true
+  // requestAnimationFrame(visualiseMicrophoneSignal)
 }
 
 const onMicrophoneOff = () => {
@@ -164,7 +218,11 @@ const onMicrophoneOff = () => {
   globals.audioContext.close()
   globals.audioContext = undefined
   globals.mediaStream = undefined
+  // globals.analyzer = undefined
   globals.microphoneOn = false
+  const canvas = document.getElementById('microphone-signal')
+  const ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
 const updateButtonState = () => {
