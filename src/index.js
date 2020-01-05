@@ -19,18 +19,20 @@ const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
 const B_KEY = 66
 const M_KEY = 77
+const V_KEY = 86
 
 const globals = {
   CTX: undefined,
   WIDTH: 0,
   HEIGHT: 0,
-  MIN_Y: 0,
-  MAX_Y: 0,
-  INITIAL_X: 0,
-  INITIAL_Y: 0,
+  SPARKLER_X: 0,
+  MIN_SPARKLER_Y: 0,
+  MAX_SPARKLER_Y: 0,
+  INITIAL_SPARKLER_Y: 0,
 
-  currentVelocityY: 0,
-  currentY: 0,
+  currentSparklerVelocityX: 0,
+  currentSparklerVelocityY: 0,
+  currentSparklerY: 0,
   remainingBoosts: 0,
   sparklerParticles: [],
   burstParticles: [],
@@ -39,7 +41,9 @@ const globals = {
 
   audioContext: undefined,
   mediaStream: undefined,
-  microphoneOn: false
+  microphoneOn: false,
+  microphoneVisualisationOn: false,
+  microphoneVisualisationChart: undefined
 }
 
 const range = n => Array.from(Array(n).keys())
@@ -49,35 +53,43 @@ const getTimestamp = () => new Date().getTime()
 const randomVelocity = () => (Math.random() - 0.5) * 2.5
 
 const createSparklerParticle = () => ({
-  x: globals.INITIAL_X,
-  y: globals.currentY,
+  x: globals.SPARKLER_X,
+  y: globals.currentSparklerY,
   velocityX: randomVelocity(),
   velocityY: randomVelocity(),
   iterations: SPARKLER_PARTICLE_ITERATIONS,
   size: SPARKLER_PARTICLE_SIZE
 })
 
+const createBurstParticle = (angle, hypotenuse) => ({
+  x: globals.SPARKLER_X + hypotenuse * Math.cos(angle),
+  y: globals.currentSparklerY + hypotenuse * Math.sin(angle),
+  iterations: BURST_PARTICLE_ITERATIONS,
+  size: BURST_PARTICLE_SIZE,
+  angle
+})
+
 const calculateAccelerationY = deltaTime => {
 
   const MULTIPLIER = 100
 
-  if (globals.currentY <= globals.MIN_Y) {
+  if (globals.currentSparklerY <= globals.MIN_SPARKLER_Y) {
     const accelerationY = GRAVITY
-    globals.currentVelocityY = accelerationY * deltaTime
-    const movementY = globals.currentVelocityY * deltaTime * MULTIPLIER
+    globals.currentSparklerVelocityY = accelerationY * deltaTime
+    const movementY = globals.currentSparklerVelocityY * deltaTime * MULTIPLIER
     return movementY
   }
 
-  if (globals.currentY >= globals.MAX_Y) {
+  if (globals.currentSparklerY >= globals.MAX_SPARKLER_Y) {
     const accelerationY = 0 - (globals.remainingBoosts ? BOOST : 0)
-    globals.currentVelocityY = accelerationY * deltaTime
-    const movementY = globals.currentVelocityY * deltaTime * MULTIPLIER
+    globals.currentSparklerVelocityY = accelerationY * deltaTime
+    const movementY = globals.currentSparklerVelocityY * deltaTime * MULTIPLIER
     return movementY
   }
 
   const accelerationY = GRAVITY - (globals.remainingBoosts ? BOOST : 0)
-  globals.currentVelocityY += accelerationY * deltaTime
-  const movementY = globals.currentVelocityY * deltaTime * MULTIPLIER
+  globals.currentSparklerVelocityY += accelerationY * deltaTime
+  const movementY = globals.currentSparklerVelocityY * deltaTime * MULTIPLIER
   return movementY
 }
 
@@ -87,7 +99,7 @@ const render = () => {
   const deltaTime = (thisRenderTimestamp - globals.lastRenderTimestamp) / 1000
   globals.lastRenderTimestamp = thisRenderTimestamp
   const movementY = calculateAccelerationY(deltaTime)
-  globals.currentY += movementY
+  globals.currentSparklerY += movementY
   if (globals.remainingBoosts > 0) {
     globals.remainingBoosts -= 1
   }
@@ -108,8 +120,8 @@ const render = () => {
   })
   globals.sparklerParticles = globals.sparklerParticles.filter(p => p.iterations > 0)
   if (globals.sparklerParticles.length === 0) {
-    globals.currentVelocityY = 0
-    globals.currentY = globals.INITIAL_Y
+    globals.currentSparklerVelocityY = 0
+    globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   }
 
   globals.burstParticles.forEach(burstParticle => {
@@ -124,7 +136,6 @@ const render = () => {
   globals.burstParticles = globals.burstParticles.filter(p => p.iterations > 0)
 
   requestAnimationFrame(render)
-  updateButtonState()
 }
 
 const applyBoost = () => {
@@ -138,21 +149,21 @@ const applyBurst = () => {
     const angles = range(8).map(n => n * 45).map(a => a * Math.PI / 180)
     const hypotenuses = range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
     angles.forEach(angle =>
-      hypotenuses.forEach(hypotenuse => {
-        const burstParticle = {
-          x: globals.INITIAL_X + hypotenuse * Math.cos(angle),
-          y: globals.currentY + hypotenuse * Math.sin(angle),
-          iterations: BURST_PARTICLE_ITERATIONS,
-          size: BURST_PARTICLE_SIZE,
-          angle
-        }
-        globals.burstParticles.push(burstParticle)
-      }))
+      hypotenuses.forEach(hypotenuse =>
+        globals.burstParticles.push(createBurstParticle(angle, hypotenuse))))
   }
 }
 
 const toggleMicrophone = () => {
-  globals.microphoneOn ? onMicrophoneOff() : onMicrophoneOn()
+  globals.microphoneOn
+    ? microphoneOff()
+    : microphoneOn()
+}
+
+const toggleMicrophoneVisualisation = () => {
+  globals.microphoneVisualisationOn
+    ? microphoneVisualisationOff()
+    : microphoneVisualisationOn()
 }
 
 const onKeyDown = e => {
@@ -161,11 +172,12 @@ const onKeyDown = e => {
     case UP_ARROW_KEY: return applyBoost()
     case B_KEY: return applyBurst()
     case M_KEY: return toggleMicrophone()
+    case V_KEY: return toggleMicrophoneVisualisation()
   }
 }
 
-const drawMicrophoneSignal = (canvasId, data) => {
-  new Chart(canvasId, {
+const createMicrophoneVisualisationChart = (canvasId, data) => {
+  return new Chart(canvasId, {
     type: 'line',
     data: {
       labels: range(data.length),
@@ -209,26 +221,42 @@ const drawMicrophoneSignal = (canvasId, data) => {
   })
 }
 
+const updateMicrophoneVisualisationChart = (chart, data) => {
+  chart.data.datasets[0].data = data
+  chart.update()
+}
+
 class StreamWorklet extends AudioWorkletNode {
 
   constructor(audioContext, name) {
-    console.log(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
+    log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
     super(audioContext, name)
     this.port.onmessage = this.onMessage
   }
 
   onMessage(message) {
+
     if (!globals.microphoneOn) return
+
     const input = message.data[0]
     const channel = input[0]
     if (channel.some(value => value >= 0.25)) {
       applyBoost()
     }
-    drawMicrophoneSignal('microphone-signal', channel)
+
+    if (globals.microphoneVisualisationOn) {
+      if (globals.microphoneVisualisationChart) {
+        const chart = globals.microphoneVisualisationChart
+        updateMicrophoneVisualisationChart(chart, channel)
+      } else {
+        const chart = createMicrophoneVisualisationChart('microphone-signal', channel)
+        globals.microphoneVisualisationChart = chart
+      }
+    }
   }
 }
 
-const onMicrophoneOn = async () => {
+const microphoneOn = async () => {
   const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
   const audioContext = new AudioContext({ sampleRate: 8000 })
   const source = audioContext.createMediaStreamSource(mediaStream)
@@ -239,9 +267,10 @@ const onMicrophoneOn = async () => {
   globals.audioContext = audioContext
   globals.mediaStream = mediaStream
   globals.microphoneOn = true
+  microphoneVisualisationOff()
 }
 
-const onMicrophoneOff = () => {
+const microphoneOff = () => {
   globals.mediaStream.getTracks().forEach(track => track.stop())
   globals.audioContext.close()
   globals.audioContext = undefined
@@ -252,14 +281,20 @@ const onMicrophoneOff = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-const updateButtonState = () => {
-  const microphoneOnButton = document.getElementById('microphone-on-btn')
-  const microphoneOffButton = document.getElementById('microphone-off-btn')
-  microphoneOnButton.disabled = globals.microphoneOn
-  microphoneOffButton.disabled = !globals.microphoneOn
+const microphoneVisualisationOn = () => {
+  globals.microphoneVisualisationOn = true
+  globals.microphoneVisualisationChart = undefined
+  document.getElementById('microphone-signal').style.visibility = 'visible'
+}
+
+const microphoneVisualisationOff = () => {
+  globals.microphoneVisualisationOn = false
+  globals.microphoneVisualisationChart = undefined
+  document.getElementById('microphone-signal').style.visibility = 'hidden'
 }
 
 const init = async () => {
+
   const canvas = document.getElementById('canvas')
   const width = canvas.scrollWidth
   const height = canvas.scrollHeight
@@ -269,21 +304,15 @@ const init = async () => {
   globals.CTX = canvas.getContext('2d')
   globals.WIDTH = width
   globals.HEIGHT = height
-  globals.MIN_Y = MARGIN_Y
-  globals.MAX_Y = height - MARGIN_Y
-  globals.INITIAL_X = width * 0.25
-  globals.INITIAL_Y = globals.MAX_Y
+  globals.SPARKLER_X = width * 0.25
+  globals.MIN_SPARKLER_Y = MARGIN_Y
+  globals.MAX_SPARKLER_Y = height - MARGIN_Y
+  globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
 
-  globals.currentY = globals.INITIAL_Y
+  globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
 
   document.addEventListener('keydown', onKeyDown)
-
-  const microphoneOnButton = document.getElementById('microphone-on-btn')
-  microphoneOnButton.addEventListener('click', onMicrophoneOn)
-
-  const microphoneOffButton = document.getElementById('microphone-off-btn')
-  microphoneOffButton.addEventListener('click', onMicrophoneOff)
 
   render()
 }

@@ -1,9 +1,6 @@
-console.log('stream-processor.js loaded')
-
 class StreamProcessor extends AudioWorkletProcessor {
 
   constructor() {
-    console.log('[StreamProcessor#constructor]')
     super()
   }
 
