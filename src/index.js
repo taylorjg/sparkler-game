@@ -10,11 +10,15 @@ const COLOURS = [
 ]
 const GRAVITY = 9.81
 const BOOST = GRAVITY * 2.5
-const PARTICLE_ITERATIONS = 50
-const PARTICLE_SIZE = 5
+const SPARKLER_PARTICLE_ITERATIONS = 50
+const SPARKLER_PARTICLE_SIZE = 5
+const BURST_PARTICLE_ITERATIONS = 5
+const BURST_PARTICLE_SIZE = 3
+const BURST_PARTICLE_VELOCITY = 20
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
+const B_KEY = 66
 
 const globals = {
   CTX: undefined,
@@ -28,12 +32,13 @@ const globals = {
   currentVelocityY: 0,
   currentY: 0,
   remainingBoosts: 0,
-  particles: [],
+  sparklerParticles: [],
+  burstParticles: [],
+  obastacles: [],
   lastRenderTimestamp: 0,
 
   audioContext: undefined,
   mediaStream: undefined,
-  // analyzer: undefined,
   microphoneOn: false
 }
 
@@ -43,13 +48,13 @@ const getTimestamp = () => new Date().getTime()
 
 const randomVelocity = () => (Math.random() - 0.5) * 2.5
 
-const createParticle = () => ({
+const createSparklerParticle = () => ({
   x: globals.INITIAL_X,
   y: globals.currentY,
   velocityX: randomVelocity(),
   velocityY: randomVelocity(),
-  iterations: PARTICLE_ITERATIONS,
-  size: PARTICLE_SIZE
+  iterations: SPARKLER_PARTICLE_ITERATIONS,
+  size: SPARKLER_PARTICLE_SIZE
 })
 
 const calculateAccelerationY = deltaTime => {
@@ -77,7 +82,7 @@ const calculateAccelerationY = deltaTime => {
 }
 
 const render = () => {
-  globals.particles.push(createParticle())
+  globals.sparklerParticles.push(createSparklerParticle())
   const thisRenderTimestamp = getTimestamp()
   const deltaTime = (thisRenderTimestamp - globals.lastRenderTimestamp) / 1000
   globals.lastRenderTimestamp = thisRenderTimestamp
@@ -87,25 +92,37 @@ const render = () => {
     globals.remainingBoosts -= 1
   }
   globals.CTX.clearRect(0, 0, globals.WIDTH, globals.HEIGHT)
-  globals.particles.forEach(particle => {
-    const { x, y, velocityX, velocityY, iterations, size } = particle
+  globals.sparklerParticles.forEach(sparklerParticle => {
+    const { x, y, velocityX, velocityY, iterations, size } = sparklerParticle
     const numColours = COLOURS.length
-    const colourIndex = numColours - Math.floor(iterations / PARTICLE_ITERATIONS * numColours)
+    const colourIndex = numColours - Math.floor(iterations / SPARKLER_PARTICLE_ITERATIONS * numColours)
     const rgbStr = COLOURS[colourIndex]
-    const alpha = Math.floor(iterations / PARTICLE_ITERATIONS * 255)
+    const alpha = Math.floor(iterations / SPARKLER_PARTICLE_ITERATIONS * 255)
     const alphaStr = alpha.toString(16).padStart(2, '0')
     globals.CTX.fillStyle = rgbStr + alphaStr
     globals.CTX.fillRect(x, y, size, size)
-    particle.x += velocityX
-    particle.y += velocityY + movementY
-    particle.iterations -= 1
-    particle.size *= 0.99
+    sparklerParticle.x += velocityX
+    sparklerParticle.y += velocityY + movementY
+    sparklerParticle.iterations -= 1
+    sparklerParticle.size *= 0.99
   })
-  globals.particles = globals.particles.filter(p => p.iterations > 0)
-  if (globals.particles.length === 0) {
+  globals.sparklerParticles = globals.sparklerParticles.filter(p => p.iterations > 0)
+  if (globals.sparklerParticles.length === 0) {
     globals.currentVelocityY = 0
     globals.currentY = globals.INITIAL_Y
   }
+
+  globals.burstParticles.forEach(burstParticle => {
+    const { x, y, size, angle } = burstParticle
+    globals.CTX.fillStyle = '#ffffff'
+    globals.CTX.fillRect(x, y, size, size)
+    burstParticle.x += BURST_PARTICLE_VELOCITY * 2 * Math.cos(angle)
+    burstParticle.y += BURST_PARTICLE_VELOCITY * 2 * Math.sin(angle)
+    burstParticle.iterations -= 1
+    burstParticle.size *= 0.99
+  })
+  globals.burstParticles = globals.burstParticles.filter(p => p.iterations > 0)
+
   requestAnimationFrame(render)
   updateButtonState()
 }
@@ -116,9 +133,29 @@ const applyBoost = () => {
   }
 }
 
+const applyBurst = () => {
+  if (globals.burstParticles.length === 0) {
+    const angles = range(8).map(n => n * 45 * Math.PI / 180)
+    const hypotenuses = range(3).map(n => (n + 1) * BURST_PARTICLE_VELOCITY)
+    angles.forEach(angle =>
+      hypotenuses.forEach(hypotenuse => {
+        const burstParticle = {
+          x: globals.INITIAL_X + hypotenuse * Math.cos(angle),
+          y: globals.currentY + hypotenuse * Math.sin(angle),
+          iterations: BURST_PARTICLE_ITERATIONS,
+          size: BURST_PARTICLE_SIZE,
+          angle
+        }
+        globals.burstParticles.push(burstParticle)
+      }))
+  }
+}
+
 const onKeyDown = e => {
-  if (e.keyCode === UP_ARROW_KEY) {
-    applyBoost()
+  log.info(`[onKeyDown] e.keyCode: ${e.keyCode}`)
+  switch (e.keyCode) {
+    case UP_ARROW_KEY: return applyBoost()
+    case B_KEY: return applyBurst()
   }
 }
 
@@ -167,15 +204,6 @@ const drawMicrophoneSignal = (canvasId, data) => {
   })
 }
 
-// const visualiseMicrophoneSignal = () => {
-//   if (globals.microphoneOn) {
-//     const timeDomainData = new Uint8Array(globals.analyzer.frequencyBinCount)
-//     globals.analyzer.getByteTimeDomainData(timeDomainData)
-//     drawMicrophoneSignal('microphone-signal', timeDomainData)
-//     requestAnimationFrame(visualiseMicrophoneSignal)
-//   }
-// }
-
 class StreamWorklet extends AudioWorkletNode {
 
   constructor(audioContext, name) {
@@ -203,14 +231,9 @@ const onMicrophoneOn = async () => {
   const streamProcessor = new StreamWorklet(audioContext, 'stream-processor')
   source.connect(streamProcessor)
   streamProcessor.connect(audioContext.destination)
-  // const analyzer = audioContext.createAnalyser()
-  // analyzer.fftSize = 256
-  // source.connect(analyzer)
   globals.audioContext = audioContext
   globals.mediaStream = mediaStream
-  // globals.analyzer = analyzer
   globals.microphoneOn = true
-  // requestAnimationFrame(visualiseMicrophoneSignal)
 }
 
 const onMicrophoneOff = () => {
@@ -218,7 +241,6 @@ const onMicrophoneOff = () => {
   globals.audioContext.close()
   globals.audioContext = undefined
   globals.mediaStream = undefined
-  // globals.analyzer = undefined
   globals.microphoneOn = false
   const canvas = document.getElementById('microphone-signal')
   const ctx = canvas.getContext('2d')

@@ -11,6 +11,7 @@ module.exports = {
     'no-console': 'off'
   },
   globals: {
-    Chart: 'readonly'
+    Chart: 'readonly',
+    log: 'readonly'
   }
 }

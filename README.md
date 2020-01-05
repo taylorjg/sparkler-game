@@ -15,7 +15,7 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 * ~~Add fading effect~~
 * Add glow effect (may need to switch to SVG or THREE.js for this)
 * Add drag effect to the sparkler particles
-* Add burst effect
+* ~~Add burst effect (via the 'B' key)~~
 * ~~Add ability to keep the sparkler in the air by applying boosts via the up arrow key~~
 * ~~Add ability to control the upward boost via the microphone volume level~~
 * Add obstacles
