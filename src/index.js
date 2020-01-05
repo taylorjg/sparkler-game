@@ -18,6 +18,7 @@ const MARGIN_Y = 50
 const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
 const B_KEY = 66
+const M_KEY = 77
 
 const globals = {
   CTX: undefined,
@@ -150,11 +151,16 @@ const applyBurst = () => {
   }
 }
 
+const toggleMicrophone = () => {
+  globals.microphoneOn ? onMicrophoneOff() : onMicrophoneOn()
+}
+
 const onKeyDown = e => {
   log.info(`[onKeyDown] e.keyCode: ${e.keyCode}`)
   switch (e.keyCode) {
     case UP_ARROW_KEY: return applyBoost()
     case B_KEY: return applyBurst()
+    case M_KEY: return toggleMicrophone()
   }
 }
 
