@@ -5,6 +5,15 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 
 ![Frame from Clip](frame-from-clip.png)
 
+# Keyboard actions
+
+| Key | Description |
+| --- | ----------- |
+| Up Arrow | Apply an upward force on the sparkler |
+| M | Toggle microphone on/off. When on, making a noise applies an upward force on the sparkler |
+| V | Toggle live visualisation of the microphone signal on/off |
+| B | Emit a burst |
+
 # TODO
 
 * ~~Animate single particle~~
@@ -28,3 +37,4 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 # Links
 
 * [Seb Lee-Delisle on GitHub](https://github.com/sebleedelisle)
+* [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
