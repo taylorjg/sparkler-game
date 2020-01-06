@@ -11,7 +11,7 @@ const GRAVITY = 9.81
 const BOOST = GRAVITY * 2.5
 const SPARKLER_PARTICLE_ITERATIONS = 50
 const SPARKLER_PARTICLE_SIZE = 5
-const BURST_PARTICLE_ITERATIONS = 5
+const BURST_PARTICLE_ITERATIONS = 10
 const BURST_PARTICLE_SIZE = 3
 const BURST_PARTICLE_VELOCITY = 20
 const MARGIN_Y = 50
@@ -36,7 +36,7 @@ const globals = {
   remainingBoosts: 0,
   sparklerParticles: [],
   burstParticles: [],
-  obastacles: [],
+  obstacle: undefined,
   lastRenderTimestamp: 0,
 
   audioContext: undefined,
@@ -68,6 +68,30 @@ const createBurstParticle = (angle, hypotenuse) => ({
   size: BURST_PARTICLE_SIZE,
   angle
 })
+
+const createObstacle = percent => {
+  const obstacleWidth = 75
+  const obstacleHeight = globals.HEIGHT * percent / 100
+  const obstacleX = globals.WIDTH
+  const upper = [
+    { x: obstacleX, y: 0 },
+    { x: obstacleX, y: obstacleHeight },
+    { x: obstacleX + obstacleWidth, y: obstacleHeight },
+    { x: obstacleX + obstacleWidth, y: 0 }
+  ]
+  const lower = upper.map(pt => ({ x: pt.x, y: globals.HEIGHT - pt.y }))
+  return {
+    upper,
+    lower,
+    percent
+  }
+}
+
+const updateObstacle = (obstacle, velocityX) => {
+  const { upper, lower } = obstacle
+  upper.forEach(pt => pt.x += velocityX)
+  lower.forEach(pt => pt.x += velocityX)
+}
 
 const calculateAccelerationY = deltaTime => {
 
@@ -128,14 +152,53 @@ const render = () => {
     const { x, y, size, angle } = burstParticle
     globals.CTX.fillStyle = '#ffffff'
     globals.CTX.fillRect(x - size / 2, y - size / 2, size, size)
-    burstParticle.x += BURST_PARTICLE_VELOCITY * 2 * Math.cos(angle)
-    burstParticle.y += BURST_PARTICLE_VELOCITY * 2 * Math.sin(angle)
+    burstParticle.x += BURST_PARTICLE_VELOCITY * 1 * Math.cos(angle)
+    burstParticle.y += BURST_PARTICLE_VELOCITY * 1 * Math.sin(angle)
     burstParticle.iterations -= 1
     burstParticle.size *= 0.99
   })
   globals.burstParticles = globals.burstParticles.filter(p => p.iterations > 0)
 
-  requestAnimationFrame(render)
+  let collided = false
+
+  if (globals.obstacle) {
+    const { upper, lower } = globals.obstacle
+    const upperPath = new Path2D()
+    upperPath.moveTo(upper[0].x, upper[0].y)
+    upperPath.lineTo(upper[1].x, upper[1].y)
+    const r = (upper[2].x - upper[1].x) / 2
+    upperPath.arc(upper[1].x + r, upper[1].y + r, r, Math.PI, 0, true)
+    upperPath.lineTo(upper[3].x, upper[3].y)
+    const lowerPath = new Path2D()
+    lowerPath.moveTo(lower[0].x, lower[0].y)
+    lowerPath.lineTo(lower[1].x, lower[1].y)
+    lowerPath.arc(lower[1].x + r, lower[1].y - r, r, Math.PI, 0, false)
+    lowerPath.lineTo(lower[3].x, lower[3].y)
+    globals.CTX.strokeStyle = 'lightblue'
+    globals.CTX.lineWidth = 2
+    globals.CTX.stroke(upperPath)
+    globals.CTX.stroke(lowerPath)
+    const dx = globals.SPARKLER_X - globals.obstacle.upper[2].x
+    if (dx >= 0 && dx <= 2) {
+      applyBurst()
+    }
+    if (globals.CTX.isPointInPath(upperPath, globals.SPARKLER_X, globals.currentSparklerY)) {
+      console.log('Collided with obstacle upper part')
+      collided = true
+    }
+    if (globals.CTX.isPointInPath(lowerPath, globals.SPARKLER_X, globals.currentSparklerY)) {
+      console.log('Collided with obstacle lower part')
+      collided = true
+    }
+    updateObstacle(globals.obstacle, -5)
+    if (globals.obstacle.upper[2].x <= 0) {
+      globals.obstacle = createObstacle(globals.obstacle.percent + 3)
+    }
+  }
+
+  if (!collided) {
+    requestAnimationFrame(render)
+  }
 }
 
 const applyBoost = () => {
@@ -311,6 +374,8 @@ const init = async () => {
 
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
+
+  globals.obstacle = createObstacle(20)
 
   document.addEventListener('keydown', onKeyDown)
 

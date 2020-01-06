@@ -27,10 +27,10 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 * ~~Add burst effect (via the 'B' key)~~
 * ~~Add ability to keep the sparkler in the air by applying boosts via the up arrow key~~
 * ~~Add ability to control the upward boost via the microphone volume level~~
-* Add obstacles
-* Add horizontal scrolling of the obstacles
-* Add collision detection of the sparkler colliding with obstacles
-* Trigger the burst effect after successfully navigating each obstacle
+* ~~Add obstacles~~
+* ~~Add horizontal scrolling of the obstacles~~
+* ~~Add collision detection of the sparkler colliding with obstacles~~
+* ~~Trigger the burst effect after successfully navigating each obstacle~~
 * Display the current score (count of successfully navigated obstacles)
 * Handle game over on collision and show final score
 
