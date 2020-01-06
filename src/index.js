@@ -20,6 +20,7 @@ const UP_ARROW_KEY = 38
 const B_KEY = 66
 const M_KEY = 77
 const V_KEY = 86
+const RETURN_KEY = 13
 
 const globals = {
   CTX: undefined,
@@ -30,6 +31,7 @@ const globals = {
   MAX_SPARKLER_Y: 0,
   INITIAL_SPARKLER_Y: 0,
 
+  gameOver: false,
   currentSparklerVelocityX: 0,
   currentSparklerVelocityY: 0,
   currentSparklerY: 0,
@@ -69,10 +71,10 @@ const createBurstParticle = (angle, hypotenuse) => ({
   angle
 })
 
-const createObstacle = percent => {
+const createObstacle = (percent, first) => {
   const obstacleWidth = 75
   const obstacleHeight = globals.HEIGHT * percent / 100
-  const obstacleX = globals.WIDTH
+  const obstacleX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
   const upper = [
     { x: obstacleX, y: 0 },
     { x: obstacleX, y: obstacleHeight },
@@ -162,11 +164,13 @@ const render = () => {
   let collided = false
 
   if (globals.obstacle) {
-    const { upper, lower } = globals.obstacle
+    const { upper, lower, percent } = globals.obstacle
+    const leftX = upper[0].x
+    const rightX = upper[3].x
+    const r = (rightX - leftX) / 2
     const upperPath = new Path2D()
     upperPath.moveTo(upper[0].x, upper[0].y)
     upperPath.lineTo(upper[1].x, upper[1].y)
-    const r = (upper[2].x - upper[1].x) / 2
     upperPath.arc(upper[1].x + r, upper[1].y + r, r, Math.PI, 0, true)
     upperPath.lineTo(upper[3].x, upper[3].y)
     const lowerPath = new Path2D()
@@ -178,36 +182,37 @@ const render = () => {
     globals.CTX.lineWidth = 2
     globals.CTX.stroke(upperPath)
     globals.CTX.stroke(lowerPath)
-    const dx = globals.SPARKLER_X - globals.obstacle.upper[2].x
+    const dx = globals.SPARKLER_X - rightX
     if (dx >= 0 && dx <= 2) {
-      applyBurst()
+      createBurst()
     }
-    if (globals.CTX.isPointInPath(upperPath, globals.SPARKLER_X, globals.currentSparklerY)) {
-      console.log('Collided with obstacle upper part')
-      collided = true
-    }
-    if (globals.CTX.isPointInPath(lowerPath, globals.SPARKLER_X, globals.currentSparklerY)) {
-      console.log('Collided with obstacle lower part')
-      collided = true
-    }
-    updateObstacle(globals.obstacle, -5)
-    if (globals.obstacle.upper[2].x <= 0) {
-      globals.obstacle = createObstacle(globals.obstacle.percent + 3)
+    const x = globals.SPARKLER_X
+    const y = globals.currentSparklerY
+    const paths = [upperPath, lowerPath]
+    collided = paths.some(path => globals.CTX.isPointInPath(path, x, y))
+    updateObstacle(globals.obstacle, globals.currentSparklerVelocityX)
+    if (rightX <= 0) {
+      globals.obstacle = createObstacle(percent + 1)
     }
   }
 
-  if (!collided) {
+  if (collided) {
+    globals.gameOver = true
+  } else {
     requestAnimationFrame(render)
   }
 }
 
 const applyBoost = () => {
   if (globals.remainingBoosts === 0) {
+    if (globals.currentSparklerVelocityX === 0) {
+      globals.currentSparklerVelocityX = -5
+    }
     globals.remainingBoosts = MAX_BOOSTS
   }
 }
 
-const applyBurst = () => {
+const createBurst = () => {
   if (globals.burstParticles.length === 0) {
     const angles = range(8).map(n => n * 45).map(a => a * Math.PI / 180)
     const hypotenuses = range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
@@ -229,14 +234,25 @@ const toggleMicrophoneVisualisation = () => {
     : microphoneVisualisationOn()
 }
 
+const reset = () => {
+  globals.gameOver = false
+  globals.currentSparklerVelocityX = 0
+  globals.currentSparklerVelocityY = 0
+  globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
+  globals.lastRenderTimestamp = getTimestamp()
+  globals.obstacle = createObstacle(20, true)
+  render()
+}
+
 const onKeyDown = e => {
   log.info(`[onKeyDown] e.keyCode: ${e.keyCode}`)
   switch (e.keyCode) {
     case UP_ARROW_KEY: return applyBoost()
-    case B_KEY: return applyBurst()
+    case B_KEY: return createBurst()
     case M_KEY: return toggleMicrophone()
     case V_KEY: return toggleMicrophoneVisualisation()
-  }
+    case RETURN_KEY: return globals.gameOver ? reset() : undefined
+   }
 }
 
 const createMicrophoneVisualisationChart = (canvasId, data) => {
@@ -375,7 +391,7 @@ const init = async () => {
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
 
-  globals.obstacle = createObstacle(20)
+  globals.obstacle = createObstacle(20, true)
 
   document.addEventListener('keydown', onKeyDown)
 

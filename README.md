@@ -19,7 +19,7 @@ Royal Institution Christmas Lectures 2019 part 2. See [clip](https://youtu.be/AJ
 I have only tried this using Chrome on a MacBook Pro.
 I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface which doesn't seem to be widely implemented.
 
-> TODO: fallback to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode).
+> TODO: fallback to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode). Perhaps use [audioworklet-polyfill](https://github.com/GoogleChromeLabs/audioworklet-polyfill).
 
 # TODO
 
