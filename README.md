@@ -1,7 +1,7 @@
 # Description
 
 Attempt to re-create the JavaScript game created by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
-Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
+Royal Institution Christmas Lectures 2019 part 2. See [clip](https://youtu.be/AJJS80lbpJs?t=560).
 
 ![Frame from Clip](frame-from-clip.png)
 
@@ -13,6 +13,13 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 | M | Toggle microphone on/off. When on, making a noise applies an upward force on the sparkler |
 | V | Toggle live visualisation of the microphone signal on/off |
 | B | Emit a burst |
+
+# Browser compatibility
+
+I have only tried this using Chrome on a MacBook Pro.
+I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface which doesn't seem to be widely implemented.
+
+> TODO: fallback to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode).
 
 # TODO
 
@@ -36,5 +43,6 @@ Royal Institution Christmas Lectures 2019 part 2 (time 05:06 - 10:40).
 
 # Links
 
+* [Clip](https://youtu.be/AJJS80lbpJs?t=560)
 * [Seb Lee-Delisle on GitHub](https://github.com/sebleedelisle)
 * [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
