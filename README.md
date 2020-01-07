@@ -39,11 +39,12 @@ I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/
 * ~~Add collision detection of the sparkler colliding with obstacles~~
 * ~~Trigger the burst effect after successfully navigating each obstacle~~
 * ~~Display the current score (count of successfully navigated obstacles)~~
-* Handle game over on collision and show final score
+* ~~Handle game over on collision and show final score~~
 
 # Links
 
 * [Clip](https://youtu.be/AJJS80lbpJs?t=560)
 * [Seb Lee-Delisle on GitHub](https://github.com/sebleedelisle)
+* [Royal Institution tweet re crowd-noise laser](https://twitter.com/Ri_Science/status/1210654725529624576?s=20)
 * [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
 * [Vector Battle Font](https://www.fontspace.com/freaky-fonts/vector-battle)

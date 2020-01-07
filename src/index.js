@@ -14,6 +14,9 @@ const SPARKLER_PARTICLE_SIZE = 5
 const BURST_PARTICLE_ITERATIONS = 10
 const BURST_PARTICLE_SIZE = 3
 const BURST_PARTICLE_VELOCITY = 20
+const OBSTACLE_WIDTH = 75
+const OBSTACLE_MIN_PERCENT = 25
+const OBSTACLE_MAX_PERCENT = 40
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
@@ -73,14 +76,13 @@ const createBurstParticle = (angle, hypotenuse) => ({
 })
 
 const createObstacle = (percent, first) => {
-  const obstacleWidth = 75
   const obstacleHeight = globals.HEIGHT * percent / 100
   const obstacleX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
   const upper = [
     { x: obstacleX, y: 0 },
-    { x: obstacleX, y: obstacleHeight },
-    { x: obstacleX + obstacleWidth, y: obstacleHeight },
-    { x: obstacleX + obstacleWidth, y: 0 }
+    { x: obstacleX, y: obstacleHeight - OBSTACLE_WIDTH / 2 },
+    { x: obstacleX + OBSTACLE_WIDTH, y: obstacleHeight - OBSTACLE_WIDTH / 2 },
+    { x: obstacleX + OBSTACLE_WIDTH, y: 0 }
   ]
   const lower = upper.map(pt => ({ x: pt.x, y: globals.HEIGHT - pt.y }))
   return {
@@ -194,17 +196,24 @@ const render = () => {
     collided = paths.some(path => globals.CTX.isPointInPath(path, x, y))
     updateObstacle(globals.obstacle, globals.currentSparklerVelocityX)
     if (rightX <= 0) {
-      globals.obstacle = createObstacle(percent + 1)
+      globals.obstacle = createObstacle(Math.min(percent + 1, OBSTACLE_MAX_PERCENT))
     }
   }
 
-  globals.CTX.font = '50px VectorBattle'
-  globals.CTX.fillStyle = 'magenta'
-  globals.CTX.fillText(globals.currentScore, 20, 80)
-
   if (collided) {
+    globals.CTX.font = '50px VectorBattle'
+    globals.CTX.textAlign = 'center'
+    globals.CTX.textBaseline = 'middle'
+    globals.CTX.fillStyle = 'magenta'
+    const cx = globals.WIDTH / 2
+    const cy = globals.HEIGHT / 2
+    globals.CTX.fillText(`score ${globals.currentScore}`, cx, cy - 40)
+    globals.CTX.fillText('Press RETURN', cx, cy + 40)
     globals.gameOver = true
   } else {
+    globals.CTX.font = '50px VectorBattle'
+    globals.CTX.fillStyle = 'magenta'
+    globals.CTX.fillText(globals.currentScore, 20, 80)
     requestAnimationFrame(render)
   }
 }
@@ -247,7 +256,7 @@ const reset = () => {
   globals.currentSparklerVelocityY = 0
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
-  globals.obstacle = createObstacle(20, true)
+  globals.obstacle = createObstacle(25, true)
   render()
 }
 
@@ -259,7 +268,7 @@ const onKeyDown = e => {
     case M_KEY: return toggleMicrophone()
     case V_KEY: return toggleMicrophoneVisualisation()
     case RETURN_KEY: return globals.gameOver ? reset() : undefined
-   }
+  }
 }
 
 const createMicrophoneVisualisationChart = (canvasId, data) => {
@@ -312,44 +321,16 @@ const updateMicrophoneVisualisationChart = (chart, data) => {
   chart.update()
 }
 
-class StreamWorklet extends AudioWorkletNode {
-
-  constructor(audioContext, name) {
-    log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
-    super(audioContext, name)
-    this.port.onmessage = this.onMessage
-  }
-
-  onMessage(message) {
-
-    if (!globals.microphoneOn) return
-
-    const input = message.data[0]
-    const channel = input[0]
-    if (channel.some(value => value >= 0.25)) {
-      applyBoost()
-    }
-
-    if (globals.microphoneVisualisationOn) {
-      if (globals.microphoneVisualisationChart) {
-        const chart = globals.microphoneVisualisationChart
-        updateMicrophoneVisualisationChart(chart, channel)
-      } else {
-        const chart = createMicrophoneVisualisationChart('microphone-signal', channel)
-        globals.microphoneVisualisationChart = chart
-      }
-    }
-  }
-}
-
 const microphoneOn = async () => {
   const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  const audioContext = new AudioContext({ sampleRate: 8000 })
+  // const audioContext = new AudioContext({ sampleRate: 8000 })
+  const audioContext = new AudioContext()
   const source = audioContext.createMediaStreamSource(mediaStream)
-  await audioContext.audioWorklet.addModule('stream-processor.js')
-  const streamProcessor = new StreamWorklet(audioContext, 'stream-processor')
-  source.connect(streamProcessor)
-  streamProcessor.connect(audioContext.destination)
+  const moduleUrl = `${location.origin}/stream-processor.js`
+  await audioContext.audioWorklet.addModule(moduleUrl)
+  const streamWorklet = new StreamWorklet(audioContext, 'stream-processor')
+  source.connect(streamWorklet)
+  streamWorklet.connect(audioContext.destination)
   globals.audioContext = audioContext
   globals.mediaStream = mediaStream
   globals.microphoneOn = true
@@ -398,11 +379,45 @@ const init = async () => {
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
 
-  globals.obstacle = createObstacle(20, true)
+  globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
 
   document.addEventListener('keydown', onKeyDown)
 
   render()
+}
+
+class StreamWorklet extends AudioWorkletNode {
+
+  constructor(audioContext, name) {
+    log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
+    super(audioContext, name)
+    this.port.onmessage = this.onMessage
+    console.dir(this.port)
+  }
+
+  onMessage(message) {
+
+    console.log(`[StreamWorklet#onMessage] globals.microphoneOn: ${globals.microphoneOn}; globals.microphoneVisualisationOn: ${globals.microphoneVisualisationOn}`)
+    console.dir(message)
+
+    if (!globals.microphoneOn) return
+
+    const input = message.data[0]
+    const channel = input[0]
+    if (channel.some(value => value >= 0.25)) {
+      applyBoost()
+    }
+
+    if (globals.microphoneVisualisationOn) {
+      if (globals.microphoneVisualisationChart) {
+        const chart = globals.microphoneVisualisationChart
+        updateMicrophoneVisualisationChart(chart, channel)
+      } else {
+        const chart = createMicrophoneVisualisationChart('microphone-signal', channel)
+        globals.microphoneVisualisationChart = chart
+      }
+    }
+  }
 }
 
 init()
