@@ -15,8 +15,8 @@ const BURST_PARTICLE_ITERATIONS = 10
 const BURST_PARTICLE_SIZE = 3
 const BURST_PARTICLE_VELOCITY = 20
 const OBSTACLE_WIDTH = 75
-const OBSTACLE_MIN_PERCENT = 25
-const OBSTACLE_MAX_PERCENT = 40
+const OBSTACLE_MIN_PERCENT = 30
+const OBSTACLE_MAX_PERCENT = 45
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
@@ -78,10 +78,11 @@ const createBurstParticle = (angle, hypotenuse) => ({
 const createObstacle = (percent, first) => {
   const obstacleHeight = globals.HEIGHT * percent / 100
   const obstacleX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
+  const r = OBSTACLE_WIDTH/2
   const upper = [
     { x: obstacleX, y: 0 },
-    { x: obstacleX, y: obstacleHeight - OBSTACLE_WIDTH / 2 },
-    { x: obstacleX + OBSTACLE_WIDTH, y: obstacleHeight - OBSTACLE_WIDTH / 2 },
+    { x: obstacleX, y: obstacleHeight - r },
+    { x: obstacleX + OBSTACLE_WIDTH, y: obstacleHeight - r },
     { x: obstacleX + OBSTACLE_WIDTH, y: 0 }
   ]
   const lower = upper.map(pt => ({ x: pt.x, y: globals.HEIGHT - pt.y }))
@@ -174,12 +175,12 @@ const render = () => {
     const upperPath = new Path2D()
     upperPath.moveTo(upper[0].x, upper[0].y)
     upperPath.lineTo(upper[1].x, upper[1].y)
-    upperPath.arc(upper[1].x + r, upper[1].y + r, r, Math.PI, 0, true)
+    upperPath.arc(upper[1].x + r, upper[1].y, r, Math.PI, 0, true)
     upperPath.lineTo(upper[3].x, upper[3].y)
     const lowerPath = new Path2D()
     lowerPath.moveTo(lower[0].x, lower[0].y)
     lowerPath.lineTo(lower[1].x, lower[1].y)
-    lowerPath.arc(lower[1].x + r, lower[1].y - r, r, Math.PI, 0, false)
+    lowerPath.arc(lower[1].x + r, lower[1].y, r, Math.PI, 0, false)
     lowerPath.lineTo(lower[3].x, lower[3].y)
     globals.CTX.strokeStyle = 'lightblue'
     globals.CTX.lineWidth = 2
@@ -189,6 +190,7 @@ const render = () => {
     if (globals.currentSparklerVelocityX && dx >= 0 && dx <= Math.abs(globals.currentSparklerVelocityX)) {
       createBurst()
       globals.currentScore++
+      globals.currentSparklerVelocityX -= 0.5
     }
     const x = globals.SPARKLER_X
     const y = globals.currentSparklerY
@@ -256,7 +258,7 @@ const reset = () => {
   globals.currentSparklerVelocityY = 0
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = getTimestamp()
-  globals.obstacle = createObstacle(25, true)
+  globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
   render()
 }
 
@@ -323,7 +325,6 @@ const updateMicrophoneVisualisationChart = (chart, data) => {
 
 const microphoneOn = async () => {
   const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  // const audioContext = new AudioContext({ sampleRate: 8000 })
   const audioContext = new AudioContext()
   const source = audioContext.createMediaStreamSource(mediaStream)
   const moduleUrl = `${location.origin}/stream-processor.js`
