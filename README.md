@@ -1,7 +1,7 @@
 # Description
 
-Attempt to re-create the JavaScript game created by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
-Royal Institution Christmas Lectures 2019 part 2. See [clip](https://youtu.be/AJJS80lbpJs?t=560).
+Attempt to re-create the game presented by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
+Royal Institution Christmas Lectures 2019, Lecture 2. See [clip](https://youtu.be/AJJS80lbpJs?t=560).
 
 ![Frame from Clip](frame-from-clip.png)
 
@@ -38,7 +38,7 @@ I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/
 * ~~Add horizontal scrolling of the obstacles~~
 * ~~Add collision detection of the sparkler colliding with obstacles~~
 * ~~Trigger the burst effect after successfully navigating each obstacle~~
-* Display the current score (count of successfully navigated obstacles)
+* ~~Display the current score (count of successfully navigated obstacles)~~
 * Handle game over on collision and show final score
 
 # Links
@@ -46,3 +46,4 @@ I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/
 * [Clip](https://youtu.be/AJJS80lbpJs?t=560)
 * [Seb Lee-Delisle on GitHub](https://github.com/sebleedelisle)
 * [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
+* [Vector Battle Font](https://www.fontspace.com/freaky-fonts/vector-battle)

@@ -32,6 +32,7 @@ const globals = {
   INITIAL_SPARKLER_Y: 0,
 
   gameOver: false,
+  currentScore: 0,
   currentSparklerVelocityX: 0,
   currentSparklerVelocityY: 0,
   currentSparklerY: 0,
@@ -183,8 +184,9 @@ const render = () => {
     globals.CTX.stroke(upperPath)
     globals.CTX.stroke(lowerPath)
     const dx = globals.SPARKLER_X - rightX
-    if (dx >= 0 && dx <= 2) {
+    if (globals.currentSparklerVelocityX && dx >= 0 && dx <= Math.abs(globals.currentSparklerVelocityX)) {
       createBurst()
+      globals.currentScore++
     }
     const x = globals.SPARKLER_X
     const y = globals.currentSparklerY
@@ -195,6 +197,10 @@ const render = () => {
       globals.obstacle = createObstacle(percent + 1)
     }
   }
+
+  globals.CTX.font = '50px VectorBattle'
+  globals.CTX.fillStyle = 'magenta'
+  globals.CTX.fillText(globals.currentScore, 20, 80)
 
   if (collided) {
     globals.gameOver = true
@@ -236,6 +242,7 @@ const toggleMicrophoneVisualisation = () => {
 
 const reset = () => {
   globals.gameOver = false
+  globals.currentScore = 0
   globals.currentSparklerVelocityX = 0
   globals.currentSparklerVelocityY = 0
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
