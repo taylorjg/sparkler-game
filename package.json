@@ -1,16 +1,23 @@
 {
   "name": "sparkler-game",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Recreate Seb Lee-Delisle's JavaScript sparkler/firework game from Royal Institution Christmas Lectures 2019 part 2",
   "main": "index.js",
   "scripts": {
     "eslint": "eslint .",
-    "start": "node server"
+    "build": "webpack",
+    "start": "node server",
+    "start:dev": "webpack-dev-server"
   },
   "author": "Jonathan Taylor",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^6.8.0"
+    "copy-webpack-plugin": "^5.1.1",
+    "eslint": "^6.8.0",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
   },
   "dependencies": {
     "express": "^4.17.1"

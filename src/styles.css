@@ -17,6 +17,16 @@ html, body {
   background-color: black;
 }
 
+#version {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  font-size: small;
+  font-style: italic;
+  color: white;
+  opacity: 0.5;
+}
+
 #microphone-panel {
   position: absolute;
   right: 20px;

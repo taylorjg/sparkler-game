@@ -8,12 +8,14 @@
 
 <body>
   <canvas id="canvas"></canvas>
+  <div id="version">
+    <span>version: <%= htmlWebpackPlugin.options.version %></span>
+  </div>
   <div id="microphone-panel">
     <canvas id="microphone-signal"></canvas>
   </div>
   <script src="https://unpkg.com/chart.js"></script>
   <script src="https://unpkg.com/loglevel"></script>
-  <script src="index.js"></script>
 </body>
 
 </html>

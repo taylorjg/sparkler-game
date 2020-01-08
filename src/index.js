@@ -24,6 +24,7 @@ const B_KEY = 66
 const M_KEY = 77
 const V_KEY = 86
 const RETURN_KEY = 13
+const NOISE_LEVEL_THRESHOLD = 0.25
 
 const globals = {
   CTX: undefined,
@@ -53,6 +54,8 @@ const globals = {
 }
 
 const range = n => Array.from(Array(n).keys())
+
+const degreesToRadians = degrees => degrees * Math.PI / 180
 
 const getTimestamp = () => new Date().getTime()
 
@@ -240,7 +243,7 @@ const applyBoost = () => {
 
 const createBurst = () => {
   if (globals.burstParticles.length === 0) {
-    const angles = range(8).map(n => n * 45).map(a => a * Math.PI / 180)
+    const angles = range(8).map(n => n * 45).map(degreesToRadians)
     const hypotenuses = range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
     angles.forEach(angle =>
       hypotenuses.forEach(hypotenuse =>
@@ -353,20 +356,16 @@ const microphoneOff = () => {
   globals.audioContext = undefined
   globals.mediaStream = undefined
   globals.microphoneOn = false
-  const canvas = document.getElementById('microphone-signal')
-  const ctx = canvas.getContext('2d')
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  microphoneVisualisationOff()
 }
 
 const microphoneVisualisationOn = () => {
   globals.microphoneVisualisationOn = true
-  globals.microphoneVisualisationChart = undefined
   document.getElementById('microphone-signal').style.visibility = 'visible'
 }
 
 const microphoneVisualisationOff = () => {
   globals.microphoneVisualisationOn = false
-  globals.microphoneVisualisationChart = undefined
   document.getElementById('microphone-signal').style.visibility = 'hidden'
 }
 
@@ -402,19 +401,18 @@ class StreamWorklet extends AudioWorkletNode {
     log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
     super(audioContext, name)
     this.port.onmessage = this.onMessage
-    console.dir(this.port)
   }
 
   onMessage(message) {
 
-    console.log(`[StreamWorklet#onMessage] globals.microphoneOn: ${globals.microphoneOn}; globals.microphoneVisualisationOn: ${globals.microphoneVisualisationOn}`)
-    console.dir(message)
+    log.info('[StreamWorklet#onMessage]')
 
     if (!globals.microphoneOn) return
 
     const input = message.data[0]
     const channel = input[0]
-    if (channel.some(value => value >= 0.25)) {
+
+    if (channel.some(value => value >= NOISE_LEVEL_THRESHOLD)) {
       applyBoost()
     }
 
