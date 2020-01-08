@@ -16,7 +16,7 @@ const BURST_PARTICLE_SIZE = 3
 const BURST_PARTICLE_VELOCITY = 20
 const OBSTACLE_WIDTH = 75
 const OBSTACLE_MIN_PERCENT = 30
-const OBSTACLE_MAX_PERCENT = 45
+const OBSTACLE_MAX_PERCENT = 40
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
 const UP_ARROW_KEY = 38
@@ -76,16 +76,25 @@ const createBurstParticle = (angle, hypotenuse) => ({
 })
 
 const createObstacle = (percent, first) => {
-  const obstacleHeight = globals.HEIGHT * percent / 100
-  const obstacleX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
-  const r = OBSTACLE_WIDTH/2
+  const ratio = Math.random() - 0.5
+  const height = globals.HEIGHT * percent / 100
+  const height1 = (1 + ratio) * height
+  const height2 = (1 - ratio) * height
+  const leftX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
+  const rightX = leftX + OBSTACLE_WIDTH
+  const r = OBSTACLE_WIDTH / 2
   const upper = [
-    { x: obstacleX, y: 0 },
-    { x: obstacleX, y: obstacleHeight - r },
-    { x: obstacleX + OBSTACLE_WIDTH, y: obstacleHeight - r },
-    { x: obstacleX + OBSTACLE_WIDTH, y: 0 }
+    { x: leftX, y: 0 },
+    { x: leftX, y: height1 - r },
+    { x: rightX, y: height1 - r },
+    { x: rightX, y: 0 }
   ]
-  const lower = upper.map(pt => ({ x: pt.x, y: globals.HEIGHT - pt.y }))
+  const lower = [
+    { x: leftX, y: globals.HEIGHT },
+    { x: leftX, y: globals.HEIGHT - height2 - r },
+    { x: rightX, y: globals.HEIGHT - height2 - r },
+    { x: rightX, y: globals.HEIGHT }
+  ]
   return {
     upper,
     lower,
@@ -215,7 +224,7 @@ const render = () => {
   } else {
     globals.CTX.font = '50px VectorBattle'
     globals.CTX.fillStyle = 'magenta'
-    globals.CTX.fillText(globals.currentScore, 20, 80)
+    globals.CTX.fillText(globals.currentScore, 40, 80)
     requestAnimationFrame(render)
   }
 }
