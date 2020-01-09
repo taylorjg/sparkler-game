@@ -272,7 +272,7 @@ const onKeyDown = e => {
 
 const onMouseDown = e => {
   log.info(`[onMouseDown] e.button: ${e.button}`)
-  microphoneModule.toggleMicrophone()
+  applyBoost()
 }
 
 const main = async () => {
