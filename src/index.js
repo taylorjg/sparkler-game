@@ -1,5 +1,6 @@
 import log from 'loglevel'
-import Chart from 'chart.js'
+import configureMicrophoneModule from './microphone'
+import * as U from './utils'
 
 const COLOURS = [
   '#ffffff',
@@ -22,12 +23,12 @@ const OBSTACLE_MIN_PERCENT = 30
 const OBSTACLE_MAX_PERCENT = 40
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
+const NOISE_LEVEL_THRESHOLD = 0.25
 const UP_ARROW_KEY = 38
 const B_KEY = 66
 const M_KEY = 77
 const V_KEY = 86
 const RETURN_KEY = 13
-const NOISE_LEVEL_THRESHOLD = 0.25
 
 const globals = {
   CTX: undefined,
@@ -48,19 +49,7 @@ const globals = {
   burstParticles: [],
   obstacle: undefined,
   lastRenderTimestamp: 0,
-
-  audioContext: undefined,
-  mediaStream: undefined,
-  microphoneOn: false,
-  microphoneVisualisationOn: false,
-  microphoneVisualisationChart: undefined
 }
-
-const range = n => Array.from(Array(n).keys())
-
-const degreesToRadians = degrees => degrees * Math.PI / 180
-
-const getTimestamp = () => new Date().getTime()
 
 const randomVelocity = () => (Math.random() - 0.5) * 2.5
 
@@ -81,12 +70,12 @@ const createBurstParticle = (angle, hypotenuse) => ({
   angle
 })
 
-const createObstacle = (percent, first) => {
+const createObstacle = (percent, initialPosition) => {
   const ratio = Math.random() - 0.5
   const height = globals.HEIGHT * percent / 100
   const height1 = (1 + ratio) * height
   const height2 = (1 - ratio) * height
-  const leftX = first ? globals.WIDTH * 0.8 : globals.WIDTH + 1
+  const leftX = initialPosition ? globals.WIDTH * 0.8 : globals.WIDTH + 1
   const rightX = leftX + OBSTACLE_WIDTH
   const r = OBSTACLE_WIDTH / 2
   const upper = [
@@ -140,7 +129,7 @@ const calculateAccelerationY = deltaTime => {
 
 const render = () => {
   globals.sparklerParticles.push(createSparklerParticle())
-  const thisRenderTimestamp = getTimestamp()
+  const thisRenderTimestamp = U.getTimestamp()
   const deltaTime = (thisRenderTimestamp - globals.lastRenderTimestamp) / 1000
   globals.lastRenderTimestamp = thisRenderTimestamp
   const movementY = calculateAccelerationY(deltaTime)
@@ -246,24 +235,12 @@ const applyBoost = () => {
 
 const createBurst = () => {
   if (globals.burstParticles.length === 0) {
-    const angles = range(8).map(n => n * 45).map(degreesToRadians)
-    const hypotenuses = range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
+    const angles = U.range(8).map(n => n * 45).map(U.degreesToRadians)
+    const hypotenuses = U.range(3).map(n => n + 1).map(n => n * BURST_PARTICLE_VELOCITY)
     angles.forEach(angle =>
       hypotenuses.forEach(hypotenuse =>
         globals.burstParticles.push(createBurstParticle(angle, hypotenuse))))
   }
-}
-
-const toggleMicrophone = () => {
-  globals.microphoneOn
-    ? microphoneOff()
-    : microphoneOn()
-}
-
-const toggleMicrophoneVisualisation = () => {
-  globals.microphoneVisualisationOn
-    ? microphoneVisualisationOff()
-    : microphoneVisualisationOn()
 }
 
 const reset = () => {
@@ -272,104 +249,25 @@ const reset = () => {
   globals.currentSparklerVelocityX = 0
   globals.currentSparklerVelocityY = 0
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
-  globals.lastRenderTimestamp = getTimestamp()
+  globals.lastRenderTimestamp = U.getTimestamp()
   globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
   render()
 }
+
+const microphoneModule = configureMicrophoneModule({
+  NOISE_LEVEL_THRESHOLD,
+  applyBoost
+})
 
 const onKeyDown = e => {
   log.info(`[onKeyDown] e.keyCode: ${e.keyCode}`)
   switch (e.keyCode) {
     case UP_ARROW_KEY: return applyBoost()
     case B_KEY: return createBurst()
-    case M_KEY: return toggleMicrophone()
-    case V_KEY: return toggleMicrophoneVisualisation()
+    case M_KEY: return microphoneModule.toggleMicrophone()
+    case V_KEY: return microphoneModule.toggleMicrophoneVisualisation()
     case RETURN_KEY: return globals.gameOver ? reset() : undefined
   }
-}
-
-const createMicrophoneVisualisationChart = (canvasId, data) => {
-  return new Chart(canvasId, {
-    type: 'line',
-    data: {
-      labels: range(data.length),
-      datasets: [{
-        data,
-        borderColor: 'green',
-        borderWidth: 1,
-        pointStyle: 'line',
-        radius: 1,
-        fill: false,
-      }]
-    },
-    options: {
-      events: [],
-      legend: {
-        display: false
-      },
-      animation: {
-        duration: 0
-      },
-      scales: {
-        xAxes: [{
-          type: 'category',
-          labels: range(data.length),
-          ticks: {
-            fontSize: 8,
-            autoSkip: false,
-            callback: x => x % 16 === 0 || x === data.length - 1 ? x : null
-          }
-        }],
-        yAxes: [{
-          type: 'linear',
-          ticks: {
-            fontSize: 8,
-            min: -0.5,
-            max: +0.5
-          }
-        }]
-      }
-    }
-  })
-}
-
-const updateMicrophoneVisualisationChart = (chart, data) => {
-  chart.data.datasets[0].data = data
-  chart.update()
-}
-
-const microphoneOn = async () => {
-  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  const audioContext = new AudioContext()
-  const source = audioContext.createMediaStreamSource(mediaStream)
-  const moduleUrl = `${location.origin}/stream-processor.js`
-  await audioContext.audioWorklet.addModule(moduleUrl)
-  const streamWorklet = new StreamWorklet(audioContext, 'stream-processor')
-  source.connect(streamWorklet)
-  streamWorklet.connect(audioContext.destination)
-  globals.audioContext = audioContext
-  globals.mediaStream = mediaStream
-  globals.microphoneOn = true
-  microphoneVisualisationOff()
-}
-
-const microphoneOff = () => {
-  globals.mediaStream.getTracks().forEach(track => track.stop())
-  globals.audioContext.close()
-  globals.audioContext = undefined
-  globals.mediaStream = undefined
-  globals.microphoneOn = false
-  microphoneVisualisationOff()
-}
-
-const microphoneVisualisationOn = () => {
-  globals.microphoneVisualisationOn = true
-  document.getElementById('microphone-signal').style.visibility = 'visible'
-}
-
-const microphoneVisualisationOff = () => {
-  globals.microphoneVisualisationOn = false
-  document.getElementById('microphone-signal').style.visibility = 'hidden'
 }
 
 const init = async () => {
@@ -389,46 +287,13 @@ const init = async () => {
   globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
 
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
-  globals.lastRenderTimestamp = getTimestamp()
+  globals.lastRenderTimestamp = U.getTimestamp()
 
   globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
 
   document.addEventListener('keydown', onKeyDown)
 
   render()
-}
-
-class StreamWorklet extends AudioWorkletNode {
-
-  constructor(audioContext, name) {
-    log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
-    super(audioContext, name)
-    this.port.onmessage = this.onMessage
-  }
-
-  onMessage(message) {
-
-    log.info('[StreamWorklet#onMessage]')
-
-    if (!globals.microphoneOn) return
-
-    const input = message.data[0]
-    const channel = input[0]
-
-    if (channel.some(value => value >= NOISE_LEVEL_THRESHOLD)) {
-      applyBoost()
-    }
-
-    if (globals.microphoneVisualisationOn) {
-      if (globals.microphoneVisualisationChart) {
-        const chart = globals.microphoneVisualisationChart
-        updateMicrophoneVisualisationChart(chart, channel)
-      } else {
-        const chart = createMicrophoneVisualisationChart('microphone-signal', channel)
-        globals.microphoneVisualisationChart = chart
-      }
-    }
-  }
 }
 
 init()
