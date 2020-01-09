@@ -270,7 +270,16 @@ const onKeyDown = e => {
   }
 }
 
-const init = async () => {
+const onMouseDown = e => {
+  log.info(`[onMouseDown] e.button: ${e.button}`)
+  applyBoost()
+}
+
+const main = async () => {
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
 
   const canvas = document.getElementById('canvas')
   const width = canvas.scrollWidth
@@ -292,8 +301,9 @@ const init = async () => {
   globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
 
   document.addEventListener('keydown', onKeyDown)
+  document.addEventListener('mousedown', onMouseDown)
 
   render()
 }
 
-init()
+main()
