@@ -1,3 +1,4 @@
+import 'audioworklet-polyfill'
 import log from 'loglevel'
 import * as MV from './microphoneVisualisation'
 
@@ -12,33 +13,30 @@ export default config => {
   }
 
   class StreamWorklet extends AudioWorkletNode {
-
     constructor(audioContext, name) {
       log.info(`[StreamWorklet#constructor] name: ${name}; sampleRate: ${audioContext.sampleRate}`)
       super(audioContext, name)
-      this.port.onmessage = this.onMessage.bind(this)
-    }
-
-    onMessage(message) {
-
-      log.info('[StreamWorklet#onMessage]')
-
-      if (!audioState.microphoneOn) return
-
-      const input = message.data[0]
-      const channel = input[0]
-
-      if (channel.some(value => value >= config.NOISE_LEVEL_THRESHOLD)) {
-        config.applyBoost()
-      }
-
-      if (audioState.microphoneVisualisationOn) {
-        if (audioState.microphoneVisualisationChart) {
-          const chart = audioState.microphoneVisualisationChart
-          MV.updateMicrophoneVisualisationChart(chart, channel)
-        } else {
-          const chart = MV.createMicrophoneVisualisationChart('microphone-signal', channel)
-          audioState.microphoneVisualisationChart = chart
+      this.port.onmessage = message => {
+        log.info('[StreamWorklet#onMessage]')
+        if (!audioState.microphoneOn) return
+        const channelData = message.data
+        if (channelData.some(value => value >= config.NOISE_LEVEL_THRESHOLD)) {
+          config.applyBoost()
+        }
+        // When using AudioWorklet, channelData.length will be 128.
+        // When using ScriptProcessorNode, it will be much larger so
+        // trying to visualise it really slows things down.
+        // TODO: consider resampling it down to something smaller.
+        if (channelData.length === 128) {
+          if (audioState.microphoneVisualisationOn) {
+            if (audioState.microphoneVisualisationChart) {
+              const chart = audioState.microphoneVisualisationChart
+              MV.updateMicrophoneVisualisationChart(chart, channelData)
+            } else {
+              const chart = MV.createMicrophoneVisualisationChart('microphone-signal', channelData)
+              audioState.microphoneVisualisationChart = chart
+            }
+          }
         }
       }
     }

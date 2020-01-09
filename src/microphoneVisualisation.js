@@ -9,10 +9,8 @@ export const createMicrophoneVisualisationChart = (canvasId, data) =>
       datasets: [{
         data,
         borderColor: 'green',
-        borderWidth: 2,
-        pointStyle: 'line',
-        radius: 1,
-        fill: false,
+        borderWidth: 1,
+        pointStyle: 'line'
       }]
     },
     options: {

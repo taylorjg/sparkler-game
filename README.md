@@ -14,12 +14,26 @@ Royal Institution Christmas Lectures 2019, Lecture 2. See [clip](https://youtu.b
 | V | Toggle live visualisation of the microphone signal on/off |
 | B | Emit a burst |
 
+> **NOTE** Use of the microphone to control the sparkler seems to work fine on Chrome and Firefox
+(I haven't tested other browsers).
+However, I have disabled the live visualisation of the microphone signal on browsers that
+don't support the Web Audio API
+[AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface
+because it slows things down too much.
+So, effectively, the live microphone visualisation only works on Chrome at the moment.
+
 # Browser compatibility
 
-I have only tried this using Chrome on a MacBook Pro.
-I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface which doesn't seem to be widely implemented.
+## Audio
 
-> TODO: fallback to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode). Perhaps use [audioworklet-polyfill](https://github.com/GoogleChromeLabs/audioworklet-polyfill).
+Initially, I used the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface. However, this does not appear to be widely implemented.
+I am now using the [audioworklet-polyfill](https://github.com/GoogleChromeLabs/audioworklet-polyfill)
+which tries to use [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)
+but falls back to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode).
+
+## Mobile/touchscreen devices
+
+This is still a TODO item.
 
 # TODO
 
@@ -40,6 +54,7 @@ I use the Web Audio API [AudioWorklet](https://developer.mozilla.org/en-US/docs/
 * ~~Trigger the burst effect after successfully navigating each obstacle~~
 * ~~Display the current score (count of successfully navigated obstacles)~~
 * ~~Handle game over on collision and show final score~~
+* Support mobile/touchscreen devices
 
 # Links
 
