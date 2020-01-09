@@ -1,3 +1,6 @@
+import log from 'loglevel'
+import Chart from 'chart.js'
+
 const COLOURS = [
   '#ffffff',
   '#ffffff',
