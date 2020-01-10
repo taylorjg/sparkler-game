@@ -86,8 +86,8 @@ const createObstacle = (percent, initialPosition) => {
   ]
   const lower = [
     { x: leftX, y: globals.HEIGHT },
-    { x: leftX, y: globals.HEIGHT - height2 - r },
-    { x: rightX, y: globals.HEIGHT - height2 - r },
+    { x: leftX, y: globals.HEIGHT - height2 + r },
+    { x: rightX, y: globals.HEIGHT - height2 + r },
     { x: rightX, y: globals.HEIGHT }
   ]
   return {
@@ -277,6 +277,8 @@ const onMouseDown = e => {
 
 const main = async () => {
 
+  log.setLevel('info')
+
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('service-worker.js')
@@ -295,7 +297,7 @@ const main = async () => {
   globals.CTX = canvas.getContext('2d')
   globals.WIDTH = width
   globals.HEIGHT = height
-  globals.SPARKLER_X = width * 0.25
+  globals.SPARKLER_X = width * 0.2
   globals.MIN_SPARKLER_Y = MARGIN_Y
   globals.MAX_SPARKLER_Y = height - MARGIN_Y
   globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
