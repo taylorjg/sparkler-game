@@ -3,7 +3,7 @@ console.log('[service-worker]')
 const CACHE_NAME = 'cache-v1'
 
 const urlsToCache = [
-  '/index.html',
+  '/',
   '/styles.css',
   '/VectorBattle-e9XO.ttf',
   '/bundle.js',
@@ -27,3 +27,8 @@ self.addEventListener('activate', event => {
   console.log('[service-worker activate handler]')
   console.dir(event)
 })
+
+self.addEventListener('fetch', event =>
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response ? response : fetch(event.request))))

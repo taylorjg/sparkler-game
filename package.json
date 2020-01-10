@@ -1,6 +1,6 @@
 {
   "name": "sparkler-game",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Recreate Seb Lee-Delisle's JavaScript sparkler/firework game from Royal Institution Christmas Lectures 2019 part 2",
   "main": "index.js",
   "scripts": {

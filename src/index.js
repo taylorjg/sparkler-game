@@ -278,7 +278,12 @@ const onMouseDown = e => {
 const main = async () => {
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
+    try {
+      const registration = await navigator.serviceWorker.register('service-worker.js')
+      log.info('Successfully registered service worker', registration)
+    } catch (error) {
+      log.error(`Failed to register service worker: ${error.message}`)
+    }
   }
 
   const canvas = document.getElementById('canvas')
