@@ -3,24 +3,18 @@
 Attempt to re-create the game presented by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
 Royal Institution Christmas Lectures 2019, Lecture 2. See [clip](https://youtu.be/AJJS80lbpJs?t=560).
 
+## Still frame from the clip
+
 ![Frame from Clip](frame-from-clip.png)
 
-# Keyboard actions
+## Screenshot of the web app
 
-| Key | Description |
-| --- | ----------- |
-| Up Arrow | Apply an upward force on the sparkler |
-| M | Toggle microphone on/off. When on, making a noise applies an upward force on the sparkler |
-| V | Toggle live visualisation of the microphone signal on/off |
-| B | Emit a burst |
+![Screenshot](screenshot.png)
 
-> **NOTE** Use of the microphone to control the sparkler seems to work fine on Chrome and Firefox
-(I haven't tested other browsers).
-However, I have disabled the live visualisation of the microphone signal on browsers that
-don't support the Web Audio API
-[AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) interface
-because it slows things down too much.
-So, effectively, the live microphone visualisation only works on Chrome at the moment.
+# Game play
+
+* Use the up arrow key or tap to start the game and keep the sparkler in the air
+* Use the return key or tap to play again when the game is over
 
 # Browser compatibility
 

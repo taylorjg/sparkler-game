@@ -1,15 +1,12 @@
 import 'audioworklet-polyfill'
 import log from 'loglevel'
-import * as MV from './microphoneVisualisation'
 
 export default config => {
 
   const audioState = {
     audioContext: undefined,
     mediaStream: undefined,
-    microphoneOn: false,
-    microphoneVisualisationOn: false,
-    microphoneVisualisationChart: undefined
+    microphoneOn: false
   }
 
   class StreamWorklet extends AudioWorkletNode {
@@ -22,21 +19,6 @@ export default config => {
         const channelData = message.data
         if (channelData.some(value => value >= config.NOISE_LEVEL_THRESHOLD)) {
           config.applyBoost()
-        }
-        // When using AudioWorklet, channelData.length will be 128.
-        // When using ScriptProcessorNode, it will be much larger so
-        // trying to visualise it really slows things down.
-        // TODO: consider resampling it down to something smaller.
-        if (channelData.length === 128) {
-          if (audioState.microphoneVisualisationOn) {
-            if (audioState.microphoneVisualisationChart) {
-              const chart = audioState.microphoneVisualisationChart
-              MV.updateMicrophoneVisualisationChart(chart, channelData)
-            } else {
-              const chart = MV.createMicrophoneVisualisationChart('microphone-signal', channelData)
-              audioState.microphoneVisualisationChart = chart
-            }
-          }
         }
       }
     }
@@ -54,7 +36,6 @@ export default config => {
     audioState.audioContext = audioContext
     audioState.mediaStream = mediaStream
     audioState.microphoneOn = true
-    microphoneVisualisationOff()
   }
 
   const microphoneOff = () => {
@@ -63,33 +44,10 @@ export default config => {
     audioState.audioContext = undefined
     audioState.mediaStream = undefined
     audioState.microphoneOn = false
-    microphoneVisualisationOff()
-  }
-
-  const microphoneVisualisationOn = () => {
-    audioState.microphoneVisualisationOn = true
-    document.getElementById('microphone-signal').style.visibility = 'visible'
-  }
-
-  const microphoneVisualisationOff = () => {
-    audioState.microphoneVisualisationOn = false
-    document.getElementById('microphone-signal').style.visibility = 'hidden'
-  }
-
-  const toggleMicrophone = () => {
-    audioState.microphoneOn
-      ? microphoneOff()
-      : microphoneOn()
-  }
-
-  const toggleMicrophoneVisualisation = () => {
-    audioState.microphoneVisualisationOn
-      ? microphoneVisualisationOff()
-      : microphoneVisualisationOn()
   }
 
   return {
-    toggleMicrophone,
-    toggleMicrophoneVisualisation
+    microphoneOn,
+    microphoneOff
   }
 }

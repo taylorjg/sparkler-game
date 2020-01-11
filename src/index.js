@@ -18,16 +18,12 @@ const SPARKLER_PARTICLE_SIZE = 5
 const BURST_PARTICLE_ITERATIONS = 10
 const BURST_PARTICLE_SIZE = 3
 const BURST_PARTICLE_VELOCITY = 20
-const OBSTACLE_WIDTH = 75
 const OBSTACLE_MIN_PERCENT = 30
 const OBSTACLE_MAX_PERCENT = 40
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
-const NOISE_LEVEL_THRESHOLD = 0.5
+const NOISE_LEVEL_THRESHOLD = 0.75
 const UP_ARROW_KEY = 38
-const B_KEY = 66
-const M_KEY = 77
-const V_KEY = 86
 const RETURN_KEY = 13
 
 const globals = {
@@ -38,6 +34,8 @@ const globals = {
   MIN_SPARKLER_Y: 0,
   MAX_SPARKLER_Y: 0,
   INITIAL_SPARKLER_Y: 0,
+  OBSTACLE_WIDTH: 0,
+  FONT_SIZE: 0,
 
   gameOver: false,
   currentScore: 0,
@@ -75,9 +73,10 @@ const createObstacle = (percent, initialPosition) => {
   const height = globals.HEIGHT * percent / 100
   const height1 = (1 + ratio) * height
   const height2 = (1 - ratio) * height
-  const leftX = initialPosition ? globals.WIDTH * 0.8 : globals.WIDTH + 1
-  const rightX = leftX + OBSTACLE_WIDTH
-  const r = OBSTACLE_WIDTH / 2
+  const r = globals.OBSTACLE_WIDTH / 2
+  const centreX = initialPosition ? globals.WIDTH * 0.8 : globals.WIDTH + r + 2
+  const leftX = centreX - r
+  const rightX = centreX + r
   const upper = [
     { x: leftX, y: 0 },
     { x: leftX, y: height1 - r },
@@ -206,20 +205,21 @@ const render = () => {
     }
   }
 
+  globals.CTX.font = `${globals.FONT_SIZE}px VectorBattle`
+  globals.CTX.fillStyle = 'magenta'
+
   if (collided) {
-    globals.CTX.font = '50px VectorBattle'
     globals.CTX.textAlign = 'center'
     globals.CTX.textBaseline = 'middle'
-    globals.CTX.fillStyle = 'magenta'
     const cx = globals.WIDTH / 2
     const cy = globals.HEIGHT / 2
     globals.CTX.fillText(`score ${globals.currentScore}`, cx, cy - 40)
     globals.CTX.fillText('Press RETURN', cx, cy + 40)
     globals.gameOver = true
   } else {
-    globals.CTX.font = '50px VectorBattle'
-    globals.CTX.fillStyle = 'magenta'
-    globals.CTX.fillText(globals.currentScore, 40, 80)
+    globals.CTX.textAlign = 'left'
+    globals.CTX.textBaseline = 'top'
+    globals.CTX.fillText(globals.currentScore, 20, 20)
     requestAnimationFrame(render)
   }
 }
@@ -254,25 +254,47 @@ const reset = () => {
   render()
 }
 
-const microphoneModule = configureMicrophoneModule({
-  NOISE_LEVEL_THRESHOLD,
-  applyBoost
-})
-
 const onKeyDown = e => {
   log.info(`[onKeyDown] e.keyCode: ${e.keyCode}`)
   switch (e.keyCode) {
     case UP_ARROW_KEY: return applyBoost()
-    case B_KEY: return createBurst()
-    case M_KEY: return microphoneModule.toggleMicrophone()
-    case V_KEY: return microphoneModule.toggleMicrophoneVisualisation()
     case RETURN_KEY: return globals.gameOver ? reset() : undefined
   }
 }
 
 const onMouseDown = e => {
   log.info(`[onMouseDown] e.button: ${e.button}`)
-  applyBoost()
+  if (globals.gameOver) {
+    reset()
+  } else {
+    applyBoost()
+  }
+}
+
+const microphoneModule = configureMicrophoneModule({
+  NOISE_LEVEL_THRESHOLD,
+  applyBoost
+})
+
+const updateMicrophonePanel = microphoneIsOn => {
+  const microphoneIsOnIcon = document.getElementById('microphone-is-on-icon')
+  const microphoneIsOffIcon = document.getElementById('microphone-is-off-icon')
+  microphoneIsOnIcon.style.display = microphoneIsOn ? '' : 'none'
+  microphoneIsOffIcon.style.display = microphoneIsOn ? 'none' : ''
+}
+
+const turnMicrophoneOn = e => {
+  log.info('[turnMicrophoneOn]')
+  e.stopPropagation()
+  microphoneModule.microphoneOn()
+  updateMicrophonePanel(true)
+}
+
+const turnMicrophoneOff = e => {
+  log.info('[turnMicrophoneOff]')
+  e.stopPropagation()
+  microphoneModule.microphoneOff()
+  updateMicrophonePanel(false)
 }
 
 const main = async () => {
@@ -289,8 +311,9 @@ const main = async () => {
   }
 
   const canvas = document.getElementById('canvas')
-  const width = canvas.scrollWidth
-  const height = canvas.scrollHeight
+  const clientRect = canvas.getBoundingClientRect()
+  const width = clientRect.width
+  const height = clientRect.height
   canvas.width = width
   canvas.height = height
 
@@ -301,6 +324,8 @@ const main = async () => {
   globals.MIN_SPARKLER_Y = MARGIN_Y
   globals.MAX_SPARKLER_Y = height - MARGIN_Y
   globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
+  globals.OBSTACLE_WIDTH = globals.WIDTH / 20
+  globals.FONT_SIZE = Math.floor(globals.WIDTH / 30)
 
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = U.getTimestamp()
@@ -309,6 +334,11 @@ const main = async () => {
 
   document.addEventListener('keydown', onKeyDown)
   document.addEventListener('mousedown', onMouseDown)
+
+  const microphoneIsOnIcon = document.getElementById('microphone-is-on-icon')
+  const microphoneIsOffIcon = document.getElementById('microphone-is-off-icon')
+  microphoneIsOnIcon.addEventListener('mousedown', turnMicrophoneOff)
+  microphoneIsOffIcon.addEventListener('mousedown', turnMicrophoneOn)
 
   render()
 }

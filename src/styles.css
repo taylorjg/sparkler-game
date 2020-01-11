@@ -21,7 +21,7 @@ html, body {
   position: absolute;
   left: 20px;
   bottom: 20px;
-  font-size: small;
+  font-size: x-small;
   font-style: italic;
   color: white;
   opacity: 0.5;
@@ -31,4 +31,8 @@ html, body {
   position: absolute;
   right: 20px;
   bottom: 20px;
+}
+
+#microphone-panel span {
+  color: red;
 }

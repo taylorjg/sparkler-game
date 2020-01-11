@@ -1,5 +1,3 @@
-console.log('[service-worker]')
-
 const CACHE_NAME = 'cache-v1'
 
 const urlsToCache = [
@@ -10,23 +8,10 @@ const urlsToCache = [
   '/stream-processor.js'
 ]
 
-self.addEventListener('install', event => {
-  console.log('[service-worker install handler]')
-  console.dir(event)
-  self.skipWaiting()
+self.addEventListener('install', event =>
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[service-worker install handler] cache open')
-        return cache.addAll(urlsToCache)
-      })
-  )
-})
-
-self.addEventListener('activate', event => {
-  console.log('[service-worker activate handler]')
-  console.dir(event)
-})
+      .then(cache => cache.addAll(urlsToCache))))
 
 self.addEventListener('fetch', event =>
   event.respondWith(
