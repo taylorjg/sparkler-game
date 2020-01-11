@@ -22,7 +22,7 @@ const OBSTACLE_MIN_PERCENT = 30
 const OBSTACLE_MAX_PERCENT = 40
 const MARGIN_Y = 50
 const MAX_BOOSTS = 8
-const NOISE_LEVEL_THRESHOLD = 0.75
+const NOISE_LEVEL_THRESHOLD = 0.5
 const UP_ARROW_KEY = 38
 const RETURN_KEY = 13
 
@@ -216,6 +216,7 @@ const render = () => {
     globals.CTX.fillText(`score ${globals.currentScore}`, cx, cy - 40)
     globals.CTX.fillText('Press RETURN', cx, cy + 40)
     globals.gameOver = true
+    turnMicrophoneOff()
   } else {
     globals.CTX.textAlign = 'left'
     globals.CTX.textBaseline = 'top'
@@ -283,23 +284,69 @@ const updateMicrophonePanel = microphoneIsOn => {
   microphoneIsOffIcon.style.display = microphoneIsOn ? 'none' : ''
 }
 
-const turnMicrophoneOn = e => {
-  log.info('[turnMicrophoneOn]')
-  e.stopPropagation()
+const turnMicrophoneOn = () => {
   microphoneModule.microphoneOn()
   updateMicrophonePanel(true)
 }
 
-const turnMicrophoneOff = e => {
-  log.info('[turnMicrophoneOff]')
-  e.stopPropagation()
+const turnMicrophoneOff = () => {
   microphoneModule.microphoneOff()
   updateMicrophonePanel(false)
+}
+
+const onTurnMicrophoneOn = e => {
+  log.info('[turnMicrophoneOn]')
+  e.stopPropagation()
+  turnMicrophoneOn()
+}
+
+const onTurnMicrophoneOff = e => {
+  log.info('[turnMicrophoneOff]')
+  e.stopPropagation()
+  turnMicrophoneOff()
+}
+
+const onResize = () => {
+  log.info('[onResize]')
+
+  const canvas = document.getElementById('canvas')
+  const clientRect = canvas.getBoundingClientRect()
+  const width = clientRect.width
+  const height = clientRect.height
+  canvas.width = width
+  canvas.height = height
+
+  const scaleX = width / globals.WIDTH
+  const scaleY = height / globals.HEIGHT
+  log.info(`[onResize] scaleX: ${scaleX}; scaleY: ${scaleY}`)
+
+  globals.CTX = canvas.getContext('2d')
+  globals.WIDTH = width
+  globals.HEIGHT = height
+  globals.SPARKLER_X = width * 0.2
+  globals.MIN_SPARKLER_Y = MARGIN_Y
+  globals.MAX_SPARKLER_Y = height - MARGIN_Y
+  globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
+  globals.OBSTACLE_WIDTH = globals.WIDTH / 20
+  globals.FONT_SIZE = Math.floor(globals.WIDTH / 30)
+
+  globals.currentSparklerY *= scaleY;
+
+  const scaleCoord = coord => {
+    coord.x *= scaleX
+    coord.y *= scaleY
+  }
+
+  globals.sparklerParticles.forEach(scaleCoord)
+  globals.burstParticles.forEach(scaleCoord)
+  globals.obstacle.upper.forEach(scaleCoord)
+  globals.obstacle.lower.forEach(scaleCoord)
 }
 
 const main = async () => {
 
   log.setLevel('info')
+  window.log = log
 
   if ('serviceWorker' in navigator) {
     try {
@@ -335,10 +382,12 @@ const main = async () => {
   document.addEventListener('keydown', onKeyDown)
   document.addEventListener('mousedown', onMouseDown)
 
+  window.addEventListener('resize', onResize)
+
   const microphoneIsOnIcon = document.getElementById('microphone-is-on-icon')
   const microphoneIsOffIcon = document.getElementById('microphone-is-off-icon')
-  microphoneIsOnIcon.addEventListener('mousedown', turnMicrophoneOff)
-  microphoneIsOffIcon.addEventListener('mousedown', turnMicrophoneOn)
+  microphoneIsOnIcon.addEventListener('mousedown', onTurnMicrophoneOff)
+  microphoneIsOffIcon.addEventListener('mousedown', onTurnMicrophoneOn)
 
   render()
 }
