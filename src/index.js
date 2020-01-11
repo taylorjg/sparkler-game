@@ -158,11 +158,12 @@ const render = () => {
   }
 
   globals.burstParticles.forEach(burstParticle => {
-    const { x, y, size, angle } = burstParticle
+    const { x, y, iterations, size, angle } = burstParticle
     globals.CTX.fillStyle = '#ffffff'
     globals.CTX.fillRect(x - size / 2, y - size / 2, size, size)
-    burstParticle.x += BURST_PARTICLE_VELOCITY * 1 * Math.cos(angle)
-    burstParticle.y += BURST_PARTICLE_VELOCITY * 1 * Math.sin(angle)
+    const factor = (BURST_PARTICLE_ITERATIONS - iterations + 1) * 1.2
+    burstParticle.x += BURST_PARTICLE_VELOCITY * factor * Math.cos(angle)
+    burstParticle.y += BURST_PARTICLE_VELOCITY * factor * Math.sin(angle)
     burstParticle.iterations -= 1
     burstParticle.size *= 0.99
   })
@@ -214,7 +215,7 @@ const render = () => {
     const cx = globals.WIDTH / 2
     const cy = globals.HEIGHT / 2
     globals.CTX.fillText(`score ${globals.currentScore}`, cx, cy - 40)
-    globals.CTX.fillText('Press RETURN', cx, cy + 40)
+    globals.CTX.fillText('Tap to play again', cx, cy + 40)
     globals.gameOver = true
     turnMicrophoneOff()
   } else {
@@ -251,6 +252,8 @@ const reset = () => {
   globals.currentSparklerVelocityY = 0
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = U.getTimestamp()
+  globals.sparklerParticles = []
+  globals.burstParticles = []
   globals.obstacle = createObstacle(OBSTACLE_MIN_PERCENT, true)
   render()
 }
