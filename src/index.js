@@ -331,7 +331,7 @@ const onResize = () => {
   globals.MAX_SPARKLER_Y = height - MARGIN_Y
   globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
   globals.OBSTACLE_WIDTH = globals.WIDTH / 20
-  globals.FONT_SIZE = Math.floor(globals.WIDTH / 30)
+  globals.FONT_SIZE = U.roundEven(globals.WIDTH / 30)
 
   globals.currentSparklerY *= scaleY;
 
@@ -375,7 +375,7 @@ const main = async () => {
   globals.MAX_SPARKLER_Y = height - MARGIN_Y
   globals.INITIAL_SPARKLER_Y = globals.MAX_SPARKLER_Y
   globals.OBSTACLE_WIDTH = globals.WIDTH / 20
-  globals.FONT_SIZE = Math.floor(globals.WIDTH / 30)
+  globals.FONT_SIZE = U.roundEven(globals.WIDTH / 30)
 
   globals.currentSparklerY = globals.INITIAL_SPARKLER_Y
   globals.lastRenderTimestamp = U.getTimestamp()
