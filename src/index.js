@@ -1,3 +1,4 @@
+import './AudioContextMonkeyPatch'
 import log from 'loglevel'
 import configureMicrophoneModule from './microphone'
 import * as U from './utils'
@@ -217,7 +218,6 @@ const render = () => {
     globals.CTX.fillText(`score ${globals.currentScore}`, cx, cy - 40)
     globals.CTX.fillText('Tap to play again', cx, cy + 40)
     globals.gameOver = true
-    turnMicrophoneOff()
   } else {
     globals.CTX.textAlign = 'left'
     globals.CTX.textBaseline = 'top'

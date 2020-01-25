@@ -13,8 +13,18 @@ Royal Institution Christmas Lectures 2019, Lecture 2. See [clip](https://youtu.b
 
 # Game play
 
-* Use the up arrow key or tap to start the game and keep the sparkler in the air
-* Use the return key or tap to play again when the game is over
+## Not using the microphone
+
+* Use the up arrow key or click/tap to start the game and keep the sparkler in the air
+* Use the return key or click/tap to play again when the game is over
+
+## Using the microphone
+
+* Turn on the microphone on by clicking/tapping the red muted microphone icon
+  * Give permission to use the microphone
+* Make a noise to start the game and make more noise to keep the sparkler in the air
+* Use the return key or click/tap to play again when the game is over
+* Click/tap the green microphone icon to turn the microphone off when you have finished playing the game
 
 # Browser compatibility
 
@@ -24,10 +34,6 @@ Initially, I used the Web Audio API [AudioWorklet](https://developer.mozilla.org
 I am now using the [audioworklet-polyfill](https://github.com/GoogleChromeLabs/audioworklet-polyfill)
 which tries to use [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)
 but falls back to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode).
-
-## Mobile/touchscreen devices
-
-This is still a TODO item.
 
 # TODO
 
@@ -48,7 +54,7 @@ This is still a TODO item.
 * ~~Trigger the burst effect after successfully navigating each obstacle~~
 * ~~Display the current score (count of successfully navigated obstacles)~~
 * ~~Handle game over on collision and show final score~~
-* Support mobile/touchscreen devices
+* ~~Support mobile/touchscreen devices~~
 
 # Links
 
@@ -57,3 +63,6 @@ This is still a TODO item.
 * [Royal Institution tweet re crowd-noise laser](https://twitter.com/Ri_Science/status/1210654725529624576?s=20)
 * [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
 * [Vector Battle Font](https://www.fontspace.com/freaky-fonts/vector-battle)
+* [Font Awesome Free License](https://fontawesome.com/license/free)
+* [Writing Web Audio API code that works in every browser](https://developer.mozilla.org/en-US/docs/Web/Guide/Audio_and_video_delivery/Web_Audio_API_cross_browser)
+* [audioworklet-polyfill](https://github.com/GoogleChromeLabs/audioworklet-polyfill)
