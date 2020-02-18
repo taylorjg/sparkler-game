@@ -1,7 +1,9 @@
 # Description
 
 Attempt to re-create the game presented by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
-Royal Institution Christmas Lectures 2019, Lecture 2. See [clip](https://youtu.be/AJJS80lbpJs?t=560).
+Royal Institution Christmas Lectures 2019, Lecture 2.
+The full lecture is available [here](https://www.rigb.org/christmas-lectures/watch/2019/secrets-and-lies/how-to-bend-the-rules)
+and the relevant clip runs from `09:22` to `10:40`.
 
 ## Still frame from the clip
 
@@ -58,7 +60,7 @@ but falls back to [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs
 
 # Links
 
-* [Clip](https://youtu.be/AJJS80lbpJs?t=560)
+* [Full Lecture](https://www.rigb.org/christmas-lectures/watch/2019/secrets-and-lies/how-to-bend-the-rules)
 * [Seb Lee-Delisle on GitHub](https://github.com/sebleedelisle)
 * [Royal Institution tweet re crowd-noise laser](https://twitter.com/Ri_Science/status/1210654725529624576?s=20)
 * [Modeling Physics in Javascript: Gravity and Drag](https://burakkanber.com/blog/modeling-physics-javascript-gravity-and-drag/)
