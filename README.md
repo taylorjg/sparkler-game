@@ -1,3 +1,7 @@
+# Update
+
+See also my more recent attempt [here](https://github.com/taylorjg/sparkler-game-phaser) using [Phaser](https://phaser.io/).
+
 # Description
 
 Attempt to re-create the game presented by Dr. Hannah Fry's guest, Seb Lee-Delisle, during the
